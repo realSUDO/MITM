@@ -1,21 +1,60 @@
-# mitm-ai
+<div align="center">
 
-**Man in the Middle AI SDK** — A TypeScript-first agent SDK for building production-grade AI agents with tools, memory, guardrails, handoffs, tracing, and multi-provider support.
+<img src="https://img.shields.io/badge/mitm--ai-v0.1.0-6366f1?style=for-the-badge&labelColor=09090b" alt="version" />
+<img src="https://img.shields.io/npm/v/mitm-ai?style=for-the-badge&color=6366f1&labelColor=09090b" alt="npm" />
+<img src="https://img.shields.io/npm/dm/mitm-ai?style=for-the-badge&color=22c55e&labelColor=09090b" alt="downloads" />
+<img src="https://img.shields.io/badge/TypeScript-5.x-3b82f6?style=for-the-badge&labelColor=09090b" alt="typescript" />
+<img src="https://img.shields.io/badge/license-MIT-f59e0b?style=for-the-badge&labelColor=09090b" alt="license" />
+<img src="https://img.shields.io/github/actions/workflow/status/YOUR_USERNAME/mitm-ai/deploy.yml?style=for-the-badge&labelColor=09090b&label=deploy" alt="deploy" />
 
-```
-npm install mitm-ai
-```
+<br /><br />
+
+<h1>mitm-ai</h1>
+
+<p><strong>Man in the Middle AI SDK</strong></p>
+<p>TypeScript-first agent SDK for building production-grade AI agents.<br>Tools, memory, guardrails, handoffs, tracing — composable by design.</p>
+
+<br />
+
+<a href="https://docs.mitm.sud-o.app"><strong>Documentation</strong></a>
+&nbsp;&nbsp;|&nbsp;&nbsp;
+<a href="https://docs.mitm.sud-o.app/guide/quick-start"><strong>Quick Start</strong></a>
+&nbsp;&nbsp;|&nbsp;&nbsp;
+<a href="https://www.npmjs.com/package/mitm-ai"><strong>npm</strong></a>
+&nbsp;&nbsp;|&nbsp;&nbsp;
+<a href="https://mitm.sud-o.app"><strong>Website</strong></a>
+
+<br /><br />
+
+</div>
 
 ---
 
 ## Why MITM?
 
-Most AI SDKs either give you too much magic or too little control. MITM sits in the middle — a minimal, composable SDK where every part is a plain interface you can swap, extend, or ignore.
+Most AI SDKs give you too much magic or too little control. MITM sits in the middle — a minimal, composable SDK where every part is a plain interface you can swap, extend, or ignore.
 
-- **No framework lock-in** — swap providers, memory backends, or guardrail logic with one line
-- **Observable by default** — every step, tool call, and handoff fires a typed event
-- **Safe by design** — guardrails, typed errors, retries, timeouts, and loop prevention built in
-- **Production-ready** — persistent sessions, full run traces, token usage tracking
+| | MITM | LangChain | Vercel AI SDK |
+|---|---|---|---|
+| TypeScript-first | Yes | Partial | Yes |
+| No framework lock-in | Yes | No | Partial |
+| Observable by default | Yes | Partial | Partial |
+| Multi-agent handoffs | Yes | Yes | No |
+| Tool guardrails | Yes | No | No |
+| Full run tracing | Yes | Partial | No |
+| Bring your own provider | Yes | Yes | Yes |
+
+---
+
+## Installation
+
+```bash
+npm install mitm-ai
+```
+
+```bash
+export OPENAI_API_KEY=sk-...
+```
 
 ---
 
@@ -43,27 +82,8 @@ const agent = Agent.builder()
 agent.on("step", (e) => console.log(`[${e.step}]`, e.content));
 
 const result = await agent.run("Echo back: hello world");
-console.log(result);
-```
-
----
-
-## Installation
-
-```bash
-npm install mitm-ai
-```
-
-Set your API key:
-
-```bash
-OPENAI_API_KEY=sk-...
-```
-
-Or pass it directly:
-
-```ts
-new OpenAIProvider({ apiKey: "sk-...", model: "gpt-4o" })
+const trace = agent.getLastTrace();
+console.log(`Done in ${trace?.durationMs}ms — ${trace?.tokenUsage.totalTokens} tokens`);
 ```
 
 ---
@@ -74,29 +94,26 @@ new OpenAIProvider({ apiKey: "sk-...", model: "gpt-4o" })
 
 ```ts
 Agent.builder()
-  .setName("agentName")                          // used in traces and handoffs
-  .setProvider(new OpenAIProvider())             // required
-  .setInstructions("You are...")                 // system prompt
-  .tool(myTool)                                  // register tools (chainable)
-  .setMemory(new FileAdapter(), "session-id")    // optional persistence
-  .addInputGuardrail(guardrail)                  // runs before loop
-  .addOutputGuardrail(guardrail)                 // runs before returning
-  .addToolGuardrail(guardrail)                   // runs before each tool call
-  .setOutputSchema(schema, maxRetries?)          // structured output validation
-  .addHandoffTarget({ name, run })               // target agents for handoff
-  .setTimeout(60_000)                            // ms, aborts run if exceeded
-  .setMaxIterations(30)                          // default 30
-  .setStuckLoopThreshold(4)                      // detect same step repeating
+  .setName("agentName")
+  .setProvider(new OpenAIProvider())
+  .setInstructions("You are...")
+  .tool(myTool)
+  .setMemory(new FileAdapter(), "session-id")
+  .addInputGuardrail(guardrail)
+  .addOutputGuardrail(guardrail)
+  .addToolGuardrail(guardrail)
+  .setOutputSchema(schema, maxRetries?)
+  .addHandoffTarget({ name, run })
+  .setTimeout(60_000)
+  .setMaxIterations(30)
+  .setStuckLoopThreshold(4)
   .build();
 
-agent.run(query)          // returns Promise<IMessage[] | string | undefined>
-agent.getLastTrace()      // returns ITrace | null
-agent.on(event, handler)  // typed EventEmitter
-agent.attachInterceptor(fn) // sugar over on("step", ...)
-agent.printSystemPrompt() // debug
+agent.run(query)           // Promise<IMessage[] | string | undefined>
+agent.getLastTrace()       // ITrace | null
+agent.on(event, handler)   // typed EventEmitter
+agent.attachInterceptor(fn)
 ```
-
----
 
 ### Tools
 
@@ -107,62 +124,27 @@ const myTool: ITool = {
   doc: "fetchData(url: string): string",
   inputSchema: {
     fields: {
-      url: { type: "string", required: true, description: "URL to fetch" },
+      url: { type: "string", required: true },
     },
   },
-  maxRetries: 2,      // retry on failure
-  timeoutMs: 5000,    // abort if takes too long
+  maxRetries: 2,
+  timeoutMs: 5000,
   async executor(input) {
     const { url } = JSON.parse(input);
-    const res = await fetch(url);
-    return await res.text();
+    return await fetch(url).then(r => r.text());
   },
 };
 ```
 
----
-
-### Model Providers
-
-#### OpenAI (built-in)
-
-```ts
-new OpenAIProvider({
-  apiKey: "sk-...",
-  baseURL: "https://api.openai.com/v1",  // or any OpenAI-compatible endpoint
-  model: "gpt-4o-mini",
-})
-```
-
-#### Custom Provider
-
-Implement `IModelProvider` to use any LLM:
-
-```ts
-import type { IModelProvider, IMessage, IModelResponse } from "mitm-ai";
-
-class MyProvider implements IModelProvider {
-  async chat(systemPrompt: string, history: IMessage[]): Promise<IModelResponse> {
-    // call your LLM
-    return { text: "...", usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 } };
-  }
-}
-```
-
----
-
-### Memory & Sessions
+### Memory
 
 ```ts
 import { InMemoryAdapter, FileAdapter } from "mitm-ai";
 
-// In-memory (lost on process restart)
-agent.builder().setMemory(new InMemoryAdapter(), "user-123")
+.setMemory(new InMemoryAdapter(), "user-123")
+.setMemory(new FileAdapter(".sessions"), "user-123")
 
-// File-based (persists to .mitm-sessions/user-123.json)
-agent.builder().setMemory(new FileAdapter(".mitm-sessions"), "user-123")
-
-// Custom adapter — implement IMemoryAdapter
+// Custom — implement IMemoryAdapter
 interface IMemoryAdapter {
   get(sessionId: string): Promise<IMessage[]>;
   set(sessionId: string, history: IMessage[]): Promise<void>;
@@ -170,60 +152,38 @@ interface IMemoryAdapter {
 }
 ```
 
----
-
 ### Guardrails
 
 ```ts
 import type { IInputGuardrail, IOutputGuardrail, IToolGuardrail } from "mitm-ai";
 
-// Input guardrail — runs before the agent loop
-const inputGuardrail: IInputGuardrail = {
-  name: "profanity-filter",
+const input: IInputGuardrail = {
+  name: "filter",
   async run(input) {
-    if (input.includes("badword")) return { action: "block", reason: "Profanity detected" };
+    if (input.includes("badword")) return { action: "block", reason: "..." };
     return { action: "pass" };
     // or: return { action: "modify", modified: sanitized }
   },
 };
 
-// Output guardrail — runs before returning OUTPUT
-const outputGuardrail: IOutputGuardrail = {
-  name: "redact-secrets",
+const output: IOutputGuardrail = {
+  name: "redact",
   async run(output) {
     return { action: "modify", modified: output.replace(/sk-\S+/g, "[REDACTED]") };
   },
 };
 
-// Tool guardrail — runs before each tool executor call
-const toolGuardrail: IToolGuardrail = {
-  name: "no-dangerous-commands",
+const tool: IToolGuardrail = {
+  name: "no-rm-rf",
   async run(toolName, input) {
-    if (toolName === "execCli" && input.includes("rm -rf")) {
-      return { action: "block", reason: "Destructive command blocked" };
-    }
+    if (toolName === "execCli" && /rm -rf/.test(input))
+      return { action: "block", reason: "Blocked" };
     return { action: "pass" };
   },
 };
 ```
 
----
-
-### Structured Output
-
-```ts
-agent.builder().setOutputSchema({
-  fields: {
-    summary: { type: "string", required: true },
-    success: { type: "boolean", required: true },
-    files:   { type: "array",   required: true },
-  },
-}, 3) // max 3 retries if schema validation fails
-```
-
----
-
-### Agent Handoffs
+### Handoffs
 
 ```ts
 import { createHandoffTool } from "mitm-ai";
@@ -231,7 +191,7 @@ import { createHandoffTool } from "mitm-ai";
 const reviewAgent = Agent.builder()
   .setName("reviewAgent")
   .setProvider(provider)
-  .setInstructions("You review code and report findings.")
+  .setInstructions("You review code.")
   .tool(cliTool)
   .build();
 
@@ -239,7 +199,7 @@ const codingAgent = Agent.builder()
   .setName("codingAgent")
   .setProvider(provider)
   .setInstructions("Write code, then hand off to reviewAgent.")
-  .tool(createHandoffTool("reviewAgent", "Hand off to verify code"))
+  .tool(createHandoffTool("reviewAgent", "Verify the code"))
   .addHandoffTarget({
     name: "reviewAgent",
     run: (query, chain) => reviewAgent.run(query, chain),
@@ -247,73 +207,86 @@ const codingAgent = Agent.builder()
   .build();
 ```
 
-Handoff loop detection is automatic — if agent A hands off to B which hands off back to A, the chain is broken with an error.
-
----
-
 ### Events
 
 ```ts
-agent.on("step",               (e) => console.log(e.step, e.content));
-agent.on("tool:start",         (e) => console.log("Starting", e.toolName));
-agent.on("tool:end",           (e) => console.log("Done", e.toolName, e.durationMs + "ms"));
-agent.on("tool:error",         (e) => console.log("Error", e.toolName, e.error));
-agent.on("handoff",            (e) => console.log(e.fromAgent, "→", e.toAgent));
-agent.on("guardrail:triggered",(e) => console.log(e.guardrailName, e.action));
-agent.on("run:complete",       (e) => console.log("Done", e.history.length, "messages"));
-agent.on("run:failed",         (e) => console.error("Failed", e.error));
+agent.on("step",                (e) => console.log(e.step, e.content));
+agent.on("tool:start",          (e) => console.log("Starting", e.toolName));
+agent.on("tool:end",            (e) => console.log("Done", e.toolName, e.durationMs + "ms"));
+agent.on("tool:error",          (e) => console.log("Error", e.toolName, e.error));
+agent.on("handoff",             (e) => console.log(e.fromAgent, "to", e.toAgent));
+agent.on("guardrail:triggered", (e) => console.log(e.guardrailName, e.action));
+agent.on("run:complete",        (e) => console.log("Done", e.history.length, "messages"));
+agent.on("run:failed",          (e) => console.error("Failed", e.error));
 ```
-
----
 
 ### Tracing
 
 ```ts
-const result = await agent.run("...");
 const trace = agent.getLastTrace();
 
-console.log(trace.runId);
-console.log(trace.agentName);
-console.log(trace.durationMs);
-console.log(trace.totalSteps);
-console.log(trace.tokenUsage);   // { promptTokens, completionTokens, totalTokens }
-console.log(trace.toolCalls);    // [{ toolName, input, result, durationMs, error? }]
-console.log(trace.handoffs);     // [{ fromAgent, toAgent, reason, timestampMs }]
-console.log(trace.errors);       // string[]
+trace.runId           // unique UUID
+trace.agentName
+trace.durationMs
+trace.totalSteps
+trace.tokenUsage      // { promptTokens, completionTokens, totalTokens }
+trace.toolCalls       // [{ toolName, input, result, durationMs, error? }]
+trace.handoffs        // [{ fromAgent, toAgent, reason, timestampMs }]
+trace.errors          // string[]
 ```
-
----
 
 ### Reliability
 
 ```ts
 Agent.builder()
-  .setTimeout(30_000)          // abort entire run after 30s
-  .setMaxIterations(20)        // stop after 20 LLM calls
-  .setStuckLoopThreshold(4)    // detect if model repeats same step 4 times
+  .setTimeout(30_000)
+  .setMaxIterations(20)
+  .setStuckLoopThreshold(4)
 
-// Per-tool:
-const myTool: ITool = {
-  maxRetries: 2,     // retry up to 2 times on failure
-  timeoutMs: 5000,   // abort tool call after 5s
+// Per-tool
+const tool: ITool = {
+  maxRetries: 2,
+  timeoutMs: 5000,
   ...
 }
 ```
 
 ---
 
-## Examples
+## Project Structure
 
-See `src/index.ts` in the repository for a full demo with:
-- Two agents with handoff
-- File memory + in-memory sessions
-- Input, output, and tool guardrails
-- Tool input schema validation
-- EventEmitter event logging
-- Full trace output with token usage
+```
+src/
+  core/
+    agent.ts          Agent, AgentBuilder, ToolMap
+    types.ts          IMessage, ITool, IModelProvider, ...
+    trace.ts          ITrace, createTrace
+    events.ts         MITMEventMap, event payloads
+    schema.ts         IOutputSchema, validateOutput
+    validate.ts       validateToolInput
+    handoff.ts        HandoffTarget, createHandoffTool
+  providers/
+    openai.ts         OpenAIProvider
+  memory/
+    InMemoryAdapter.ts
+    FileAdapter.ts
+  guardrails/
+    types.ts          IInputGuardrail, IOutputGuardrail, IToolGuardrail
+  sdk.ts              Public barrel export
+```
 
 ---
 
 ## License
 
-MIT
+MIT — see [LICENSE](./LICENSE)
+
+---
+
+<div align="center">
+
+<img src="https://img.shields.io/badge/built_with-TypeScript-3b82f6?style=flat-square&labelColor=09090b" />
+<img src="https://img.shields.io/badge/runs_on-Node.js_18+-22c55e?style=flat-square&labelColor=09090b" />
+<img src="https://img.shields.io/badge/provider-OpenAI_compatible-6366f1?style=flat-square&labelColor=09090b" />
+
+</div>

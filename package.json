@@ -20,9 +20,24 @@
     "dev": "tsc --watch",
     "start": "node --env-file=.env dist/index.js",
     "typecheck": "tsc --noEmit",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
   },
-  "keywords": ["ai", "agent", "sdk", "llm", "tools", "mitm", "openai", "typescript", "guardrails", "handoff", "tracing"],
+  "keywords": [
+    "ai",
+    "agent",
+    "sdk",
+    "llm",
+    "tools",
+    "mitm",
+    "openai",
+    "typescript",
+    "guardrails",
+    "handoff",
+    "tracing"
+  ],
   "author": "",
   "license": "MIT",
   "type": "module",
@@ -34,9 +49,13 @@
     "url": "https://github.com/YOUR_USERNAME/mitm-ai"
   },
   "devDependencies": {
-    "@types/node": "^26.1.2"
+    "@types/node": "^26.1.2",
+    "vitepress": "^1.6.4"
   },
   "dependencies": {
     "openai": "^7.3.0"
+  },
+  "allowScripts": {
+    "esbuild@0.21.5": true
   }
 }
