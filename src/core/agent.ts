@@ -4,6 +4,8 @@ import { ToolError } from "./types.js";
 import { validateToolInput } from "./validate.js";
 import type { IMemoryAdapter } from "../memory/types.js";
 import type { IInputGuardrail, IOutputGuardrail, IToolGuardrail } from "../guardrails/types.js";
+import type { IOutputSchema } from "./schema.js";
+import { validateOutput } from "./schema.js";
 
 export class ToolMap {
 	private map: Map<string, ITool> = new Map();
@@ -43,6 +45,8 @@ export class AgentBuilder {
 	private inputGuardrails: IInputGuardrail[] = [];
 	private outputGuardrails: IOutputGuardrail[] = [];
 	private toolGuardrails: IToolGuardrail[] = [];
+	private outputSchema: IOutputSchema | undefined;
+	private maxOutputRetries: number = 3;
 
 	constructor() {
 		this.toolList = [];
@@ -108,6 +112,15 @@ export class AgentBuilder {
 	public getOutputGuardrails() { return this.outputGuardrails; }
 	public getToolGuardrails() { return this.toolGuardrails; }
 
+	public setOutputSchema(schema: IOutputSchema, maxRetries = 3) {
+		this.outputSchema = schema;
+		this.maxOutputRetries = maxRetries;
+		return this;
+	}
+
+	public getOutputSchema() { return this.outputSchema; }
+	public getMaxOutputRetries() { return this.maxOutputRetries; }
+
 	public build() {
 		return new Agent(this);
 	}
@@ -125,6 +138,8 @@ export class Agent {
 	private inputGuardrails: IInputGuardrail[];
 	private outputGuardrails: IOutputGuardrail[];
 	private toolGuardrails: IToolGuardrail[];
+	private outputSchema: IOutputSchema | undefined;
+	private maxOutputRetries: number;
 
 	constructor(builder: AgentBuilder) {
 		if (!builder.getProvider()) {
@@ -141,6 +156,8 @@ export class Agent {
 		this.inputGuardrails = builder.getInputGuardrails();
 		this.outputGuardrails = builder.getOutputGuardrails();
 		this.toolGuardrails = builder.getToolGuardrails();
+		this.outputSchema = builder.getOutputSchema();
+		this.maxOutputRetries = builder.getMaxOutputRetries();
 
 		for (const t of builder.getToolList() ?? []) {
 			this.toolMap.register(t);
@@ -222,6 +239,21 @@ export class Agent {
 			};
 
 			if (parsed.step.toLowerCase() === "output") {
+				// --- structured output validation ---
+				if (this.outputSchema) {
+					const validation = validateOutput(parsed.content, this.outputSchema);
+					if (!validation.valid) {
+						if (i < this.maxOutputRetries) {
+							this.messageHistory.push({
+								role: "developer",
+								content: `Output schema validation failed. Errors: ${validation.errors.join(" ")} — Please output valid JSON matching the required schema and repeat the OUTPUT step.`,
+							});
+							await this.persistHistory();
+							continue;
+						}
+					}
+				}
+
 				// --- output guardrails ---
 				let finalOutput = parsed.content;
 				for (const g of this.outputGuardrails) {

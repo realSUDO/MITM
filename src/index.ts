@@ -87,6 +87,13 @@ async function init() {
 		.addInputGuardrail(noProfanityInput)
 		.addOutputGuardrail(noSecretOutput)
 		.addToolGuardrail(noRmTool)
+		.setOutputSchema({
+			fields: {
+				summary: { type: "string", required: true, description: "Summary of what was done" },
+				filesCreated: { type: "array", required: true, description: "List of files created" },
+				success: { type: "boolean", required: true, description: "Whether the task succeeded" },
+			},
+		})
 		.tool(cliAccessTool)
 		.tool(fsWriteTool)
 		.build();
