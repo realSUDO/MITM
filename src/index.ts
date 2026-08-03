@@ -31,6 +31,12 @@ const fsWriteTool: ITool = {
 	name: "fsWrite",
 	description: "Writes content to a file on the user's machine",
 	doc: 'fsWrite(input: string): string — input must be JSON: { "path": string, "content": string }',
+	inputSchema: {
+		fields: {
+			path: { type: "string", description: "File path to write to", required: true },
+			content: { type: "string", description: "Content to write", required: true },
+		},
+	},
 	async executor(input) {
 		const { path, content } = JSON.parse(input) as { path: string; content: string };
 		await writeFile(path, content, "utf-8");

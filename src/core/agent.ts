@@ -1,5 +1,7 @@
 import { HARNESS_PROMPT } from "../app/config.js";
 import type { IMessage, ITool, Interceptor, IModelProvider } from "./types.js";
+import { ToolError } from "./types.js";
+import { validateToolInput } from "./validate.js";
 
 export class ToolMap {
 	private map: Map<string, ITool> = new Map();
@@ -154,14 +156,29 @@ export class Agent {
 
 				const tool = this.toolMap.get(tool_name);
 				if (!tool) {
-					this.messageHistory.push({
-						role: "developer",
-						content: `Error: Tool "${tool_name}" not found.`,
-					});
+					const err = new ToolError("tool-not-found", tool_name, `Tool "${tool_name}" not found.`);
+					this.messageHistory.push({ role: "developer", content: `ToolError [${err.kind}]: ${err.message}` });
 					continue;
 				}
 
-				const toolResult = await tool.executor(input);
+				if (tool.inputSchema) {
+					const validation = validateToolInput(input, tool.inputSchema);
+					if (!validation.valid) {
+						const err = new ToolError("validation-failed", tool_name, validation.errors.join(" "));
+						this.messageHistory.push({ role: "developer", content: `ToolError [${err.kind}] on "${tool_name}": ${err.message}` });
+						continue;
+					}
+				}
+
+				let toolResult: string;
+				try {
+					toolResult = await tool.executor(input);
+				} catch (e) {
+					const err = new ToolError("execution-error", tool_name, e instanceof Error ? e.message : String(e));
+					this.messageHistory.push({ role: "developer", content: `ToolError [${err.kind}] on "${tool_name}": ${err.message}` });
+					continue;
+				}
+
 				const toolMessage: IMessage = {
 					role: "developer",
 					content: JSON.stringify({ tool_name, input, toolResult }),
