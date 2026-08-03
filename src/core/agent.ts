@@ -2,6 +2,7 @@ import { HARNESS_PROMPT } from "../app/config.js";
 import type { IMessage, ITool, Interceptor, IModelProvider } from "./types.js";
 import { ToolError } from "./types.js";
 import { validateToolInput } from "./validate.js";
+import type { IMemoryAdapter } from "../memory/types.js";
 
 export class ToolMap {
 	private map: Map<string, ITool> = new Map();
@@ -36,6 +37,8 @@ export class AgentBuilder {
 	private instructions: string | undefined;
 	private toolList: ITool[] | undefined;
 	private provider: IModelProvider | undefined;
+	private memoryAdapter: IMemoryAdapter | undefined;
+	private sessionId: string | undefined;
 
 	constructor() {
 		this.toolList = [];
@@ -68,6 +71,20 @@ export class AgentBuilder {
 		return this.provider;
 	}
 
+	public setMemory(adapter: IMemoryAdapter, sessionId: string) {
+		this.memoryAdapter = adapter;
+		this.sessionId = sessionId;
+		return this;
+	}
+
+	public getMemoryAdapter() {
+		return this.memoryAdapter;
+	}
+
+	public getSessionId() {
+		return this.sessionId;
+	}
+
 	public build() {
 		return new Agent(this);
 	}
@@ -80,6 +97,8 @@ export class Agent {
 	private MAX_ITERATIONS = 30;
 	private provider: IModelProvider;
 	private interceptors: Interceptor[];
+	private memoryAdapter: IMemoryAdapter | undefined;
+	private sessionId: string | undefined;
 
 	constructor(builder: AgentBuilder) {
 		if (!builder.getProvider()) {
@@ -91,6 +110,8 @@ export class Agent {
 		this.provider = builder.getProvider()!;
 		this.toolMap = new ToolMap();
 		this.interceptors = [];
+		this.memoryAdapter = builder.getMemoryAdapter();
+		this.sessionId = builder.getSessionId();
 
 		for (const t of builder.getToolList() ?? []) {
 			this.toolMap.register(t);
@@ -119,6 +140,12 @@ export class Agent {
 		}
 	}
 
+	private async persistHistory(): Promise<void> {
+		if (this.memoryAdapter && this.sessionId) {
+			await this.memoryAdapter.set(this.sessionId, this.messageHistory);
+		}
+	}
+
 	public printSystemPrompt() {
 		console.log(this.instructions);
 	}
@@ -128,7 +155,13 @@ export class Agent {
 	}
 
 	public async run(query: string) {
+		// load history from adapter if session is configured
+		if (this.memoryAdapter && this.sessionId) {
+			this.messageHistory = await this.memoryAdapter.get(this.sessionId);
+		}
+
 		this.messageHistory.push({ role: "user", content: query });
+		await this.persistHistory();
 
 		for (let i = 0; i <= this.MAX_ITERATIONS; i++) {
 			const rawResponse = await this.provider.chat(
@@ -138,6 +171,7 @@ export class Agent {
 
 			this.messageHistory.push({ role: "assistant", content: rawResponse });
 			this.notifyInterceptors({ role: "assistant", content: rawResponse });
+			await this.persistHistory();
 
 			const parsed = JSON.parse(rawResponse) as {
 				step: string;
@@ -158,6 +192,7 @@ export class Agent {
 				if (!tool) {
 					const err = new ToolError("tool-not-found", tool_name, `Tool "${tool_name}" not found.`);
 					this.messageHistory.push({ role: "developer", content: `ToolError [${err.kind}]: ${err.message}` });
+					await this.persistHistory();
 					continue;
 				}
 
@@ -166,6 +201,7 @@ export class Agent {
 					if (!validation.valid) {
 						const err = new ToolError("validation-failed", tool_name, validation.errors.join(" "));
 						this.messageHistory.push({ role: "developer", content: `ToolError [${err.kind}] on "${tool_name}": ${err.message}` });
+						await this.persistHistory();
 						continue;
 					}
 				}
@@ -176,6 +212,7 @@ export class Agent {
 				} catch (e) {
 					const err = new ToolError("execution-error", tool_name, e instanceof Error ? e.message : String(e));
 					this.messageHistory.push({ role: "developer", content: `ToolError [${err.kind}] on "${tool_name}": ${err.message}` });
+					await this.persistHistory();
 					continue;
 				}
 
@@ -185,6 +222,7 @@ export class Agent {
 				};
 				this.messageHistory.push(toolMessage);
 				this.notifyInterceptors(toolMessage);
+				await this.persistHistory();
 				continue;
 			}
 		}

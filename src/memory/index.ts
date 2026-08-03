@@ -1,1 +1,3 @@
-// Memory adapters — coming in Checkpoint 3
+export type { IMemoryAdapter } from "./types.js";
+export { InMemoryAdapter } from "./InMemoryAdapter.js";
+export { FileAdapter } from "./FileAdapter.js";

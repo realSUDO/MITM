@@ -1,4 +1,4 @@
-import { Agent, OpenAIProvider } from "./sdk.js";
+import { Agent, OpenAIProvider, FileAdapter } from "./sdk.js";
 import type { ITool } from "./sdk.js";
 import { exec } from "node:child_process";
 import { writeFile } from "node:fs/promises";
@@ -45,9 +45,13 @@ const fsWriteTool: ITool = {
 };
 
 async function init() {
+	const memory = new FileAdapter(".mitm-sessions");
+	const sessionId = "demo-session-001";
+
 	const agent = Agent.builder()
 		.setProvider(new OpenAIProvider())
 		.setInstructions("You are an expert coding agent.")
+		.setMemory(memory, sessionId)
 		.tool(cliAccessTool)
 		.tool(fsWriteTool)
 		.build();
