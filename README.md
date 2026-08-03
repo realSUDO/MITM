@@ -5,7 +5,7 @@
 <img src="https://img.shields.io/npm/dm/mitm-ai?style=for-the-badge&color=22c55e&labelColor=09090b" alt="downloads" />
 <img src="https://img.shields.io/badge/TypeScript-5.x-3b82f6?style=for-the-badge&labelColor=09090b" alt="typescript" />
 <img src="https://img.shields.io/badge/license-MIT-f59e0b?style=for-the-badge&labelColor=09090b" alt="license" />
-<img src="https://img.shields.io/github/actions/workflow/status/YOUR_USERNAME/mitm-ai/deploy.yml?style=for-the-badge&labelColor=09090b&label=deploy" alt="deploy" />
+<img src="https://img.shields.io/github/actions/workflow/status/realsudo/mitm-ai/deploy.yml?style=for-the-badge&labelColor=09090b&label=deploy" alt="deploy" />
 
 <br /><br />
 

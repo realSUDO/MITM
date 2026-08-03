@@ -20,7 +20,7 @@ export default defineConfig({
       { text: "Guide", link: "/guide/quick-start" },
       { text: "API Reference", link: "/api/agent" },
       { text: "npm", link: "https://www.npmjs.com/package/mitm-ai" },
-      { text: "GitHub", link: "https://github.com/YOUR_USERNAME/mitm-ai" },
+      { text: "GitHub", link: "https://github.com/realsudo/mitm-ai" },
     ],
 
     sidebar: [
@@ -60,12 +60,12 @@ export default defineConfig({
     ],
 
     socialLinks: [
-      { icon: "github", link: "https://github.com/YOUR_USERNAME/mitm-ai" },
+      { icon: "github", link: "https://github.com/realsudo/mitm-ai" },
       { icon: "npm", link: "https://www.npmjs.com/package/mitm-ai" },
     ],
 
     editLink: {
-      pattern: "https://github.com/YOUR_USERNAME/mitm-ai/edit/main/docs/:path",
+      pattern: "https://github.com/realsudo/mitm-ai/edit/main/docs/:path",
       text: "Edit this page on GitHub",
     },
 
