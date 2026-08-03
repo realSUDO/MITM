@@ -1,5 +1,12 @@
+node_modules/
+dist/
 .env
-node_modules
-dist
-*.md
-!README.md
+.mitm-sessions/
+.vitepress/
+docs/.vitepress/cache/
+docs/.vitepress/dist/
+*.tgz
+hello
+hello.cpp
+hello.py
+calc.py
