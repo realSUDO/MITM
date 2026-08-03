@@ -1,5 +1,5 @@
-import { Agent } from "./app/agent.js";
-import type { ITool } from "./app/agent.js";
+import { Agent, OpenAIProvider } from "./sdk.js";
+import type { ITool } from "./sdk.js";
 import { exec } from "node:child_process";
 import { writeFile } from "node:fs/promises";
 
@@ -15,7 +15,7 @@ const echoTool: ITool = {
 const cliAccessTool: ITool = {
 	name: "execCli",
 	description: "Runs a CLI command on user's machine and returns output",
-	doc: "exectCli(cli: string): CLIResponse",
+	doc: "execCli(cmd: string): string",
 	executor(cmd) {
 		return new Promise((resolve) => {
 			exec(cmd, (error, stdout, stderr) => {
@@ -39,9 +39,9 @@ const fsWriteTool: ITool = {
 };
 
 async function init() {
-	const agent: Agent = Agent.builder()
-		.setInstructions(`You're a joke specialist`)
-		.tool(echoTool)
+	const agent = Agent.builder()
+		.setProvider(new OpenAIProvider())
+		.setInstructions("You are an expert coding agent.")
 		.tool(cliAccessTool)
 		.tool(fsWriteTool)
 		.build();
@@ -51,7 +51,7 @@ async function init() {
 	);
 
 	const result = await agent.run(
-		"Can you build a simple calculator program in python on my current project? as calc.py and run it using python3 to check if it works.",
+		"Can you build a simple hello world program in c++ as hello.cpp and compile it using g++ to check if it works.",
 	);
 	console.log(result?.[result.length - 1]);
 }
