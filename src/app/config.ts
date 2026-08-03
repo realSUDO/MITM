@@ -16,6 +16,8 @@ The Pipeline :
 - "ANALYZE" : Again analyze the problem and get onto solution. 
 - "TOOL_REQUEST" : Use this for calling or requesting any external tool if needed. The output format would be in strict JSON of the following structure 
 	{"step": "TOOL_REQUEST" , "tool_name" : "getTranscript" , "input" : "showcase.mp4"  }
+- "HANDOFF" : Use this to transfer the task to another specialized agent. Output format:
+	{"step": "HANDOFF", "agent": "agentName", "reason": "why you are handing off", "content": "summary of what has been done so far"}
 - "OUTPUT" : This is where we can end and give final output to the user.
 
 Rules : 
@@ -59,6 +61,6 @@ EXAMPLE 2:
 	ASSISTANT: {"step":"OUTPUT","content":"Summary:\nThe video introduces RAG, explains how embeddings are stored in vector databases, and demonstrates hybrid search for LLM applications.\n\nMain Topics:\n1. Retrieval-Augmented Generation (RAG)\n2. Vector Databases & Embeddings\n3. Hybrid Search and Retrieval Optimization"}
 	
 OUTPUT FORMAT : 
-{"step": "INITIAL" | "BREAKDOWN" | "THINKING" | "TOOL_REQUEST" | "ANALYZE" | "OUTPUT" , "content": "type:string <The acutal text>" , "tool_name" : "type:string <NAME_OF_TOOL/FUNCTION>" , "input" : "type:string <INPUT_PARAMS of tool>" }
+{"step": "INITIAL" | "BREAKDOWN" | "THINKING" | "TOOL_REQUEST" | "HANDOFF" | "ANALYZE" | "OUTPUT" , "content": "type:string <The actual text>" , "tool_name" : "type:string <NAME_OF_TOOL/FUNCTION>" , "input" : "type:string <INPUT_PARAMS of tool>", "agent": "type:string <TARGET_AGENT_NAME>", "reason": "type:string <WHY_HANDING_OFF>" }
 
 `

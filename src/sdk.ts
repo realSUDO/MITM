@@ -10,3 +10,5 @@ export type { IMemoryAdapter } from "./memory/types.js";
 export { InMemoryAdapter } from "./memory/InMemoryAdapter.js";
 export { FileAdapter } from "./memory/FileAdapter.js";
 export type { GuardrailResult, IInputGuardrail, IOutputGuardrail, IToolGuardrail } from "./guardrails/types.js";
+export type { IHandoffContext, HandoffTarget } from "./core/handoff.js";
+export { createHandoffTool } from "./core/handoff.js";

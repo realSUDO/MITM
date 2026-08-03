@@ -6,6 +6,7 @@ import type { IMemoryAdapter } from "../memory/types.js";
 import type { IInputGuardrail, IOutputGuardrail, IToolGuardrail } from "../guardrails/types.js";
 import type { IOutputSchema } from "./schema.js";
 import { validateOutput } from "./schema.js";
+import type { HandoffTarget } from "./handoff.js";
 
 export class ToolMap {
 	private map: Map<string, ITool> = new Map();
@@ -47,6 +48,8 @@ export class AgentBuilder {
 	private toolGuardrails: IToolGuardrail[] = [];
 	private outputSchema: IOutputSchema | undefined;
 	private maxOutputRetries: number = 3;
+	private agentName: string = "agent";
+	private handoffTargets: Map<string, HandoffTarget> = new Map();
 
 	constructor() {
 		this.toolList = [];
@@ -121,6 +124,20 @@ export class AgentBuilder {
 	public getOutputSchema() { return this.outputSchema; }
 	public getMaxOutputRetries() { return this.maxOutputRetries; }
 
+	public setName(name: string) {
+		this.agentName = name;
+		return this;
+	}
+
+	public getName() { return this.agentName; }
+
+	public addHandoffTarget(target: HandoffTarget) {
+		this.handoffTargets.set(target.name, target);
+		return this;
+	}
+
+	public getHandoffTargets() { return this.handoffTargets; }
+
 	public build() {
 		return new Agent(this);
 	}
@@ -140,6 +157,8 @@ export class Agent {
 	private toolGuardrails: IToolGuardrail[];
 	private outputSchema: IOutputSchema | undefined;
 	private maxOutputRetries: number;
+	private agentName: string;
+	private handoffTargets: Map<string, HandoffTarget>;
 
 	constructor(builder: AgentBuilder) {
 		if (!builder.getProvider()) {
@@ -158,6 +177,8 @@ export class Agent {
 		this.toolGuardrails = builder.getToolGuardrails();
 		this.outputSchema = builder.getOutputSchema();
 		this.maxOutputRetries = builder.getMaxOutputRetries();
+		this.agentName = builder.getName();
+		this.handoffTargets = builder.getHandoffTargets();
 
 		for (const t of builder.getToolList() ?? []) {
 			this.toolMap.register(t);
@@ -200,7 +221,12 @@ export class Agent {
 		return new AgentBuilder();
 	}
 
-	public async run(query: string) {
+	public async run(query: string, _handoffChain: string[] = []) {
+		// --- loop detection ---
+		if (_handoffChain.includes(this.agentName)) {
+			return `[MITM] Handoff loop detected: ${[..._handoffChain, this.agentName].join(" → ")}`;
+		}
+		const handoffChain = [..._handoffChain, this.agentName];
 		// --- input guardrails ---
 		let effectiveQuery = query;
 		for (const g of this.inputGuardrails) {
@@ -266,6 +292,29 @@ export class Agent {
 					}
 				}
 				return this.messageHistory;
+			}
+
+			if (parsed.step.toLowerCase() === "handoff") {
+				const p = parsed as unknown as { step: string; agent: string; reason: string; content: string };
+				const targetName = p.agent;
+				const target = this.handoffTargets.get(targetName);
+
+				if (!target) {
+					this.messageHistory.push({
+						role: "developer",
+						content: `[MITM] Handoff failed: no agent named "${targetName}" is registered.`,
+					});
+					await this.persistHistory();
+					continue;
+				}
+
+				this.notifyInterceptors({
+					role: "developer",
+					content: `[HANDOFF] ${this.agentName} → ${targetName}: ${p.reason}`,
+				});
+
+				const handoffQuery = `Context from ${this.agentName}: ${p.content}\n\nContinue the task: ${p.reason}`;
+				return target.run(handoffQuery, handoffChain);
 			}
 
 			if (parsed.step.toLowerCase() === "tool_request") {
