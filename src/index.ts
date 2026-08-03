@@ -1,7 +1,39 @@
 import { Agent, OpenAIProvider, FileAdapter } from "./sdk.js";
-import type { ITool } from "./sdk.js";
+import type { ITool, IInputGuardrail, IOutputGuardrail, IToolGuardrail } from "./sdk.js";
 import { exec } from "node:child_process";
 import { writeFile } from "node:fs/promises";
+
+// --- sample guardrails ---
+
+const noProfanityInput: IInputGuardrail = {
+	name: "no-profanity-input",
+	async run(input) {
+		const blocked = ["rm -rf", "sudo rm", "drop table", "delete from"];
+		const found = blocked.find((w) => input.toLowerCase().includes(w));
+		if (found) return { action: "block", reason: `Blocked phrase detected: "${found}"` };
+		return { action: "pass" };
+	},
+};
+
+const noSecretOutput: IOutputGuardrail = {
+	name: "no-secret-output",
+	async run(output) {
+		if (/api[_-]?key\s*[:=]\s*\S+/i.test(output)) {
+			return { action: "modify", modified: output.replace(/api[_-]?key\s*[:=]\s*\S+/gi, "API_KEY=[REDACTED]") };
+		}
+		return { action: "pass" };
+	},
+};
+
+const noRmTool: IToolGuardrail = {
+	name: "no-rm-rf",
+	async run(toolName, input) {
+		if (toolName === "execCli" && /rm\s+-rf/i.test(input)) {
+			return { action: "block", reason: "Destructive rm -rf command is not allowed." };
+		}
+		return { action: "pass" };
+	},
+};
 
 const echoTool: ITool = {
 	name: "echo",
@@ -52,6 +84,9 @@ async function init() {
 		.setProvider(new OpenAIProvider())
 		.setInstructions("You are an expert coding agent.")
 		.setMemory(memory, sessionId)
+		.addInputGuardrail(noProfanityInput)
+		.addOutputGuardrail(noSecretOutput)
+		.addToolGuardrail(noRmTool)
 		.tool(cliAccessTool)
 		.tool(fsWriteTool)
 		.build();

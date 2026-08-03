@@ -7,3 +7,4 @@ export { validateToolInput } from "./core/validate.js";
 export type { IMemoryAdapter } from "./memory/types.js";
 export { InMemoryAdapter } from "./memory/InMemoryAdapter.js";
 export { FileAdapter } from "./memory/FileAdapter.js";
+export type { GuardrailResult, IInputGuardrail, IOutputGuardrail, IToolGuardrail } from "./guardrails/types.js";

@@ -1,1 +1,1 @@
-// Guardrails — coming in Checkpoint 4
+export type { GuardrailResult, IInputGuardrail, IOutputGuardrail, IToolGuardrail } from "./types.js";

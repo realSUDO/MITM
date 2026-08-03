@@ -3,6 +3,7 @@ import type { IMessage, ITool, Interceptor, IModelProvider } from "./types.js";
 import { ToolError } from "./types.js";
 import { validateToolInput } from "./validate.js";
 import type { IMemoryAdapter } from "../memory/types.js";
+import type { IInputGuardrail, IOutputGuardrail, IToolGuardrail } from "../guardrails/types.js";
 
 export class ToolMap {
 	private map: Map<string, ITool> = new Map();
@@ -39,6 +40,9 @@ export class AgentBuilder {
 	private provider: IModelProvider | undefined;
 	private memoryAdapter: IMemoryAdapter | undefined;
 	private sessionId: string | undefined;
+	private inputGuardrails: IInputGuardrail[] = [];
+	private outputGuardrails: IOutputGuardrail[] = [];
+	private toolGuardrails: IToolGuardrail[] = [];
 
 	constructor() {
 		this.toolList = [];
@@ -85,6 +89,25 @@ export class AgentBuilder {
 		return this.sessionId;
 	}
 
+	public addInputGuardrail(g: IInputGuardrail) {
+		this.inputGuardrails.push(g);
+		return this;
+	}
+
+	public addOutputGuardrail(g: IOutputGuardrail) {
+		this.outputGuardrails.push(g);
+		return this;
+	}
+
+	public addToolGuardrail(g: IToolGuardrail) {
+		this.toolGuardrails.push(g);
+		return this;
+	}
+
+	public getInputGuardrails() { return this.inputGuardrails; }
+	public getOutputGuardrails() { return this.outputGuardrails; }
+	public getToolGuardrails() { return this.toolGuardrails; }
+
 	public build() {
 		return new Agent(this);
 	}
@@ -99,6 +122,9 @@ export class Agent {
 	private interceptors: Interceptor[];
 	private memoryAdapter: IMemoryAdapter | undefined;
 	private sessionId: string | undefined;
+	private inputGuardrails: IInputGuardrail[];
+	private outputGuardrails: IOutputGuardrail[];
+	private toolGuardrails: IToolGuardrail[];
 
 	constructor(builder: AgentBuilder) {
 		if (!builder.getProvider()) {
@@ -112,6 +138,9 @@ export class Agent {
 		this.interceptors = [];
 		this.memoryAdapter = builder.getMemoryAdapter();
 		this.sessionId = builder.getSessionId();
+		this.inputGuardrails = builder.getInputGuardrails();
+		this.outputGuardrails = builder.getOutputGuardrails();
+		this.toolGuardrails = builder.getToolGuardrails();
 
 		for (const t of builder.getToolList() ?? []) {
 			this.toolMap.register(t);
@@ -155,12 +184,24 @@ export class Agent {
 	}
 
 	public async run(query: string) {
-		// load history from adapter if session is configured
+		// --- input guardrails ---
+		let effectiveQuery = query;
+		for (const g of this.inputGuardrails) {
+			const result = await g.run(effectiveQuery);
+			if (result.action === "block") {
+				return `[MITM] Input blocked by guardrail "${g.name}": ${result.reason}`;
+			}
+			if (result.action === "modify") {
+				effectiveQuery = result.modified;
+			}
+		}
+
+		// load session history
 		if (this.memoryAdapter && this.sessionId) {
 			this.messageHistory = await this.memoryAdapter.get(this.sessionId);
 		}
 
-		this.messageHistory.push({ role: "user", content: query });
+		this.messageHistory.push({ role: "user", content: effectiveQuery });
 		await this.persistHistory();
 
 		for (let i = 0; i <= this.MAX_ITERATIONS; i++) {
@@ -180,13 +221,46 @@ export class Agent {
 				input?: string;
 			};
 
-			if (parsed.step.toLowerCase() === "output") return this.messageHistory;
+			if (parsed.step.toLowerCase() === "output") {
+				// --- output guardrails ---
+				let finalOutput = parsed.content;
+				for (const g of this.outputGuardrails) {
+					const result = await g.run(finalOutput);
+					if (result.action === "block") {
+						return `[MITM] Output blocked by guardrail "${g.name}": ${result.reason}`;
+					}
+					if (result.action === "modify") {
+						finalOutput = result.modified;
+					}
+				}
+				return this.messageHistory;
+			}
 
 			if (parsed.step.toLowerCase() === "tool_request") {
 				const { tool_name, input } = parsed;
 				if (!tool_name || !input) {
 					throw new Error("[MITM] TOOL_REQUEST missing tool_name or input.");
 				}
+
+				// --- tool guardrails ---
+				let effectiveInput = input;
+				let toolBlocked = false;
+				for (const g of this.toolGuardrails) {
+					const result = await g.run(tool_name, effectiveInput);
+					if (result.action === "block") {
+						this.messageHistory.push({
+							role: "developer",
+							content: `ToolGuardrail "${g.name}" blocked tool "${tool_name}": ${result.reason}`,
+						});
+						await this.persistHistory();
+						toolBlocked = true;
+						break;
+					}
+					if (result.action === "modify") {
+						effectiveInput = result.modified;
+					}
+				}
+				if (toolBlocked) continue;
 
 				const tool = this.toolMap.get(tool_name);
 				if (!tool) {
@@ -197,7 +271,7 @@ export class Agent {
 				}
 
 				if (tool.inputSchema) {
-					const validation = validateToolInput(input, tool.inputSchema);
+					const validation = validateToolInput(effectiveInput, tool.inputSchema);
 					if (!validation.valid) {
 						const err = new ToolError("validation-failed", tool_name, validation.errors.join(" "));
 						this.messageHistory.push({ role: "developer", content: `ToolError [${err.kind}] on "${tool_name}": ${err.message}` });
@@ -208,7 +282,7 @@ export class Agent {
 
 				let toolResult: string;
 				try {
-					toolResult = await tool.executor(input);
+					toolResult = await tool.executor(effectiveInput);
 				} catch (e) {
 					const err = new ToolError("execution-error", tool_name, e instanceof Error ? e.message : String(e));
 					this.messageHistory.push({ role: "developer", content: `ToolError [${err.kind}] on "${tool_name}": ${err.message}` });
@@ -218,7 +292,7 @@ export class Agent {
 
 				const toolMessage: IMessage = {
 					role: "developer",
-					content: JSON.stringify({ tool_name, input, toolResult }),
+					content: JSON.stringify({ tool_name, input: effectiveInput, toolResult }),
 				};
 				this.messageHistory.push(toolMessage);
 				this.notifyInterceptors(toolMessage);
