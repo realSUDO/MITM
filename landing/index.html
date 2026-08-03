@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>mitm-ai</title>
   <meta name="description" content="Man in the Middle AI SDK. TypeScript-first." />
+  <link rel="icon" type="image/png" href="/favicon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -14,46 +15,17 @@
       --bg:#080808;--bg1:#101010;--bg2:#141414;
       --border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.12);
       --t:#efefef;--t2:#a0a0a0;--t3:#484848;
-      --p:#b794f4;--p2:#9f7aea;--pdim:rgba(183,148,244,.1);
-      --g:#4ade80;
+      --p:#b794f4;--p2:#9f7aea;--pdim:rgba(183,148,244,.1);--g:#4ade80;
       --sans:"Geist",system-ui,sans-serif;--mono:"Geist Mono",monospace;
     }
     html{scroll-behavior:smooth}
     body{font-family:var(--sans);background:var(--bg);color:var(--t);-webkit-font-smoothing:antialiased;overflow-x:hidden}
     a{text-decoration:none;color:inherit}
-
-    /* NAV BLUR UNDERLAY */
-    .nav-blur{
-      position:fixed;top:0;left:0;right:0;height:80px;z-index:49;
-      pointer-events:none;
-      backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-      mask-image:linear-gradient(to bottom,black 30%,transparent 100%);
-      -webkit-mask-image:linear-gradient(to bottom,black 30%,transparent 100%);
-      opacity:0;transition:opacity .4s;
-    }
+    .nav-blur{position:fixed;top:0;left:0;right:0;height:80px;z-index:49;pointer-events:none;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);mask-image:linear-gradient(to bottom,black 30%,transparent 100%);-webkit-mask-image:linear-gradient(to bottom,black 30%,transparent 100%);opacity:0;transition:opacity .4s}
     .nav-blur.on{opacity:1}
-
-    /* FLOATING PILL NAV */
-    nav{
-      position:fixed;top:16px;left:50%;transform:translateX(-50%);
-      z-index:50;display:flex;align-items:center;gap:4px;
-      padding:0 8px 0 20px;height:44px;min-width:580px;
-      background:rgba(15,15,15,.88);
-      backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
-      border:1px solid var(--border2);border-radius:99px;
-      box-shadow:0 4px 28px rgba(0,0,0,.45);
-      animation:navIn .55s cubic-bezier(.16,1,.3,1) both;
-      transition:min-width .4s cubic-bezier(.16,1,.3,1),
-                 height .4s cubic-bezier(.16,1,.3,1),
-                 top .4s cubic-bezier(.16,1,.3,1),
-                 padding .4s cubic-bezier(.16,1,.3,1),
-                 box-shadow .4s;
-    }
+    nav{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:50;display:flex;align-items:center;gap:4px;padding:0 8px 0 20px;height:44px;min-width:580px;background:rgba(15,15,15,.88);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid var(--border2);border-radius:99px;box-shadow:0 4px 28px rgba(0,0,0,.45);animation:navIn .55s cubic-bezier(.16,1,.3,1) both;transition:min-width .4s cubic-bezier(.16,1,.3,1),height .4s cubic-bezier(.16,1,.3,1),top .4s cubic-bezier(.16,1,.3,1),padding .4s,box-shadow .4s}
     nav.scrolled{min-width:440px;height:38px;top:10px;padding:0 6px 0 16px;box-shadow:0 8px 40px rgba(0,0,0,.65)}
-    @keyframes navIn{
-      from{opacity:0;transform:translateX(-50%) translateY(-14px)}
-      to{opacity:1;transform:translateX(-50%) translateY(0)}
-    }
+    @keyframes navIn{from{opacity:0;transform:translateX(-50%) translateY(-14px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
     .logo{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--t);flex:1;transition:font-size .4s}
     nav.scrolled .logo{font-size:12px}
     .logo b{color:var(--p);font-weight:500}
@@ -64,8 +36,6 @@
     .nb{font-size:13px;font-weight:500;padding:6px 16px;border-radius:99px;background:var(--t);color:#000;margin-left:4px;transition:background .15s,transform .1s,font-size .4s,padding .4s;white-space:nowrap}
     nav.scrolled .nb{font-size:12px;padding:5px 13px}
     .nb:hover{background:#e0e0e0;transform:scale(1.03)}
-
-    /* HERO */
     .hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:100px 24px 60px;position:relative;overflow:hidden}
     .hero-glow{position:absolute;top:-200px;left:50%;transform:translateX(-50%);width:740px;height:740px;border-radius:50%;background:radial-gradient(circle,rgba(183,148,244,.11) 0%,transparent 65%);pointer-events:none}
     .hero-grid{position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);background-size:44px 44px;mask-image:radial-gradient(ellipse 65% 55% at 50% 50%,black,transparent)}
@@ -77,12 +47,15 @@
     .sub{margin-top:22px;max-width:400px;font-size:16px;line-height:1.72;color:var(--t2)}
     .hact{display:flex;gap:8px;margin-top:30px;flex-wrap:wrap;justify-content:center}
     .btn{display:inline-flex;align-items:center;gap:8px;padding:9px 20px;border-radius:99px;font-size:14px;font-weight:500;transition:all .15s;border:none;cursor:pointer;font-family:var(--sans)}
-    .bp{background:var(--t);color:#000}.bp:hover{background:#e0e0e0;transform:translateY(-1px)}
+    .bp{background:var(--t);color:#000}.bp:hover{background:#ddd;transform:translateY(-1px)}
     .bs{background:transparent;color:var(--t);border:1px solid var(--border2)}.bs:hover{border-color:rgba(255,255,255,.22);transform:translateY(-1px)}
-    .install{margin-top:26px;display:inline-flex;align-items:center;gap:10px;background:var(--bg1);border:1px solid var(--border);border-radius:8px;padding:9px 18px;font-family:var(--mono);font-size:13px}
+    .install-wrap{margin-top:26px;display:inline-flex;align-items:center}
+    .install{display:inline-flex;align-items:center;gap:10px;background:var(--bg1);border:1px solid var(--border);border-radius:8px;padding:8px 8px 8px 18px;font-family:var(--mono);font-size:13px}
     .install .ds{color:var(--t3)}.install .pkg{color:var(--p)}
-
-    /* TICKER */
+    .install-divider{width:1px;height:18px;background:var(--border2);margin:0 4px}
+    .copy-btn{background:transparent;border:none;padding:4px 10px;font-family:var(--mono);font-size:11px;color:var(--t3);cursor:pointer;transition:color .15s,background .15s;border-radius:5px}
+    .copy-btn:hover{color:var(--t2);background:rgba(255,255,255,.06)}
+    .copy-btn.ok{color:var(--g)}
     .ticker{border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:12px 0;overflow:hidden;position:relative}
     .ticker::before,.ticker::after{content:"";position:absolute;top:0;bottom:0;width:80px;z-index:2}
     .ticker::before{left:0;background:linear-gradient(90deg,var(--bg),transparent)}
@@ -90,31 +63,29 @@
     .ticker-inner{display:flex;gap:36px;animation:tick 26s linear infinite;width:max-content}
     .ti{font-family:var(--mono);font-size:11px;color:var(--t3);white-space:nowrap;letter-spacing:.08em;text-transform:uppercase}
     @keyframes tick{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-
-    /* LAYOUT */
     .wrap{max-width:1060px;margin:0 auto;padding:0 32px}
     section{padding:84px 0}
     .sl{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--p);margin-bottom:14px}
     h2{font-size:clamp(28px,4vw,42px);font-weight:700;letter-spacing:-.04em;line-height:1.1;color:var(--t)}
     .sd{margin-top:12px;font-size:15px;color:var(--t2);line-height:1.7;max-width:460px}
-
-    /* FEATURE GRID */
     .fgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;margin-top:44px;background:var(--border);border-radius:12px;overflow:hidden;border:1px solid var(--border)}
     @media(max-width:720px){.fgrid{grid-template-columns:1fr}}
     .fc{background:var(--bg);padding:26px;transition:background .15s;display:flex;flex-direction:column;gap:10px}
     .fc:hover{background:var(--bg2)}
+    .fc-icon{width:32px;height:32px;border-radius:8px;background:var(--pdim);border:1px solid rgba(183,148,244,.15);display:flex;align-items:center;justify-content:center;color:var(--p)}
+    .fc-icon svg{width:15px;height:15px}
     .fc-num{font-family:var(--mono);font-size:11px;color:var(--t3);letter-spacing:.04em}
     .fc h3{font-size:14px;font-weight:600;letter-spacing:-.02em}
     .fc p{font-size:13px;color:var(--t2);line-height:1.65;flex:1}
     .fc-link{font-family:var(--mono);font-size:11px;color:var(--p);margin-top:4px}
-
-    /* CODE SPLIT */
     .split{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center}
     @media(max-width:720px){.split{grid-template-columns:1fr}}
+    .pre-wrap{position:relative}
     pre{background:var(--bg1);border:1px solid var(--border);border-radius:10px;padding:22px;overflow-x:auto;font-family:var(--mono);font-size:12px;line-height:1.85;color:var(--t2)}
+    .pre-copy{position:absolute;top:10px;right:10px;background:rgba(16,16,16,.95);border:1px solid var(--border);border-radius:5px;padding:3px 10px;font-family:var(--mono);font-size:11px;color:var(--t3);cursor:pointer;transition:all .15s}
+    .pre-copy:hover{color:var(--t2);border-color:var(--border2)}
+    .pre-copy.ok{color:var(--g);border-color:rgba(74,222,128,.25)}
     .kw{color:#c4b5fd}.fn{color:#93c5fd}.st{color:#86efac}.cm{color:var(--t3)}.op{color:var(--t2)}.tp{color:#f9a8d4}.nu{color:#fda4af}
-
-    /* COMPARISON */
     .compare{margin-top:44px}
     .chdr{display:grid;grid-template-columns:190px repeat(4,1fr);gap:12px;padding:8px 16px;margin-bottom:4px}
     .ch{font-family:var(--mono);font-size:11px;color:var(--t3);letter-spacing:.06em;text-transform:uppercase}
@@ -123,24 +94,20 @@
     .crow:hover{background:var(--bg1)}
     .cl{font-size:13px;color:var(--t2)}
     .bar-w{height:5px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden}
-    .bar{height:100%;border-radius:99px;width:0;transition:width 1s cubic-bezier(.16,1,.3,1)}
+    .bar{height:100%;border-radius:99px;width:0;transition:width .9s cubic-bezier(.16,1,.3,1)}
     .bar.full{background:var(--p);width:100%}
     .bar.half{background:var(--t3);width:50%}
     .bar.low{background:var(--t3);width:8%;opacity:.3}
-
-    /* CTA */
     .cta{text-align:center;padding:88px 24px;border-top:1px solid var(--border)}
     .cta h2{margin-bottom:12px}
     .cta p{color:var(--t2);margin-bottom:28px;font-size:15px}
     .cta-btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
-
     footer{border-top:1px solid var(--border);padding:20px 32px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
     .fl{font-family:var(--mono);font-size:12px;color:var(--t3)}.fl b{color:var(--p);font-weight:400}
     .fr{display:flex;gap:20px}.fr a{font-size:12px;color:var(--t3);transition:color .15s}.fr a:hover{color:var(--t2)}
   </style>
 </head>
 <body>
-
 <div class="nav-blur"></div>
 <nav>
   <a class="logo" href="/"><b>mitm</b>-ai</a>
@@ -155,7 +122,6 @@
 <section class="hero">
   <div class="hero-glow"></div>
   <div class="hero-grid"></div>
-  <div class="tag"><span class="tag-dot"></span>v0.1.0 on npm</div>
   <h1>Man in<br>the <span class="hi">Middle</span></h1>
   <p class="sub">TypeScript-first AI agent SDK. Tools, memory, guardrails, handoffs, and tracing built in.</p>
   <div class="hact">
@@ -163,9 +129,8 @@
     <a class="btn bs" href="https://mitm.sud-o.app/docs/">Documentation</a>
     <a class="btn bs" href="https://github.com/realsudo/mitm-ai">GitHub</a>
   </div>
-  <div class="install">
-    <span class="ds">$</span>
-    <span>npm install </span><span class="pkg">mitm-ai</span>
+  <div class="install-wrap">
+    <div class="install"><span class="ds">$</span><span>npm install </span><span class="pkg">mitm-ai</span><span class="install-divider"></span><button class="copy-btn" onclick="copyText('npm install mitm-ai', this)">copy</button></div>
   </div>
 </section>
 
@@ -181,12 +146,42 @@
     <div class="sl">Core Features</div>
     <h2>Everything an agent needs</h2>
     <div class="fgrid">
-      <a class="fc" href="https://mitm.sud-o.app/docs/guide/tools"><div class="fc-num">01</div><h3>Tools</h3><p>Typed input schemas, validation before execution, per-tool retries and timeouts. Errors feed back to the model.</p><span class="fc-link">guide/tools</span></a>
-      <a class="fc" href="https://mitm.sud-o.app/docs/guide/memory"><div class="fc-num">02</div><h3>Memory</h3><p>In-memory or file-based sessions out of the box. Implement IMemoryAdapter to connect any database.</p><span class="fc-link">guide/memory</span></a>
-      <a class="fc" href="https://mitm.sud-o.app/docs/guide/guardrails"><div class="fc-num">03</div><h3>Guardrails</h3><p>Input, output, and tool-level safety checks. Block, modify, or pass through at every layer.</p><span class="fc-link">guide/guardrails</span></a>
-      <a class="fc" href="https://mitm.sud-o.app/docs/guide/handoffs"><div class="fc-num">04</div><h3>Handoffs</h3><p>Delegate tasks between specialized agents. Context transfers cleanly. Loop detection is automatic.</p><span class="fc-link">guide/handoffs</span></a>
-      <a class="fc" href="https://mitm.sud-o.app/docs/guide/tracing"><div class="fc-num">05</div><h3>Tracing</h3><p>Full run traces with step timing, token usage, tool calls, handoffs, and errors. One method after run().</p><span class="fc-link">guide/tracing</span></a>
-      <a class="fc" href="https://mitm.sud-o.app/docs/guide/providers"><div class="fc-num">06</div><h3>Providers</h3><p>OpenAI built in. Swap to Gemini, Claude, or Groq by implementing a 2-method interface.</p><span class="fc-link">guide/providers</span></a>
+      <a class="fc" href="https://mitm.sud-o.app/docs/guide/tools">
+        <div class="fc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></div>
+        <div class="fc-num">01</div><h3>Tools</h3>
+        <p>Typed input schemas, validation before execution, per-tool retries and timeouts. Errors feed back to the model.</p>
+        <span class="fc-link">guide/tools</span>
+      </a>
+      <a class="fc" href="https://mitm.sud-o.app/docs/guide/memory">
+        <div class="fc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg></div>
+        <div class="fc-num">02</div><h3>Memory</h3>
+        <p>In-memory or file-based sessions out of the box. Implement IMemoryAdapter to connect any database.</p>
+        <span class="fc-link">guide/memory</span>
+      </a>
+      <a class="fc" href="https://mitm.sud-o.app/docs/guide/guardrails">
+        <div class="fc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+        <div class="fc-num">03</div><h3>Guardrails</h3>
+        <p>Input, output, and tool-level safety checks. Block, modify, or pass through at every layer.</p>
+        <span class="fc-link">guide/guardrails</span>
+      </a>
+      <a class="fc" href="https://mitm.sud-o.app/docs/guide/handoffs">
+        <div class="fc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <div class="fc-num">04</div><h3>Handoffs</h3>
+        <p>Delegate tasks between specialized agents. Context transfers cleanly. Loop detection is automatic.</p>
+        <span class="fc-link">guide/handoffs</span>
+      </a>
+      <a class="fc" href="https://mitm.sud-o.app/docs/guide/tracing">
+        <div class="fc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+        <div class="fc-num">05</div><h3>Tracing</h3>
+        <p>Full run traces with step timing, token usage, tool calls, handoffs, and errors. One method after run().</p>
+        <span class="fc-link">guide/tracing</span>
+      </a>
+      <a class="fc" href="https://mitm.sud-o.app/docs/guide/providers">
+        <div class="fc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg></div>
+        <div class="fc-num">06</div><h3>Providers</h3>
+        <p>OpenAI built in. Swap to Gemini, Claude, or Groq by implementing a 2-method interface.</p>
+        <span class="fc-link">guide/providers</span>
+      </a>
     </div>
   </section>
 
@@ -201,7 +196,9 @@
           <a class="btn bs" href="https://www.npmjs.com/package/mitm-ai">npm</a>
         </div>
       </div>
-      <pre><code><span class="kw">import</span> <span class="op">{</span> <span class="tp">Agent</span><span class="op">,</span> <span class="tp">OpenAIProvider</span> <span class="op">}</span> <span class="kw">from</span> <span class="st">"mitm-ai"</span><span class="op">;</span>
+      <div class="pre-wrap">
+        <button class="pre-copy" onclick="copyCode(this)">copy</button>
+        <pre id="qs-code"><code><span class="kw">import</span> <span class="op">{</span> <span class="tp">Agent</span><span class="op">,</span> <span class="tp">OpenAIProvider</span> <span class="op">}</span> <span class="kw">from</span> <span class="st">"mitm-ai"</span><span class="op">;</span>
 
 <span class="kw">const</span> agent <span class="op">=</span> <span class="tp">Agent</span><span class="op">.</span><span class="fn">builder</span><span class="op">()</span>
   <span class="op">.</span><span class="fn">setName</span><span class="op">(</span><span class="st">"myAgent"</span><span class="op">)</span>
@@ -218,6 +215,7 @@ agent<span class="op">.</span><span class="fn">on</span><span class="op">(</span
 <span class="kw">const</span> result <span class="op">=</span> <span class="kw">await</span> agent<span class="op">.</span><span class="fn">run</span><span class="op">(</span><span class="st">"Build hello.py"</span><span class="op">);</span>
 <span class="kw">const</span> trace  <span class="op">=</span> agent<span class="op">.</span><span class="fn">getLastTrace</span><span class="op">();</span>
 <span class="cm">// trace.durationMs  trace.tokenUsage</span></code></pre>
+      </div>
     </div>
   </section>
 
@@ -226,11 +224,8 @@ agent<span class="op">.</span><span class="fn">on</span><span class="op">(</span
     <h2>What MITM has that they don't</h2>
     <div class="compare">
       <div class="chdr">
-        <span class="ch">Capability</span>
-        <span class="ch hl">MITM</span>
-        <span class="ch">LangChain</span>
-        <span class="ch">Vercel AI</span>
-        <span class="ch">OpenAI SDK</span>
+        <span class="ch">Capability</span><span class="ch hl">MITM</span>
+        <span class="ch">LangChain</span><span class="ch">Vercel AI</span><span class="ch">OpenAI SDK</span>
       </div>
       <div class="crow"><span class="cl">Tool guardrails</span><div class="bar-w"><div class="bar full"></div></div><div class="bar-w"><div class="bar low"></div></div><div class="bar-w"><div class="bar low"></div></div><div class="bar-w"><div class="bar low"></div></div></div>
       <div class="crow"><span class="cl">Full run tracing</span><div class="bar-w"><div class="bar full"></div></div><div class="bar-w"><div class="bar half"></div></div><div class="bar-w"><div class="bar low"></div></div><div class="bar-w"><div class="bar low"></div></div></div>
@@ -265,24 +260,35 @@ agent<span class="op">.</span><span class="fn">on</span><span class="op">(</span
 </footer>
 
 <script>
-  const nav = document.querySelector('nav');
-  const blur = document.querySelector('.nav-blur');
-  window.addEventListener('scroll', () => {
-    const s = window.scrollY > 40;
-    nav.classList.toggle('scrolled', s);
-    blur.classList.toggle('on', s);
-  }, { passive: true });
-
-  // animate bars into view
-  const bars = document.querySelectorAll('.bar');
-  const obs = new IntersectionObserver((entries) => {
-    entries.forEach(e => {
-      if (e.isIntersecting) {
-        e.target.style.width = e.target.classList.contains('full') ? '100%' : e.target.classList.contains('half') ? '50%' : '8%';
-      }
-    });
-  }, { threshold: 0.1 });
-  bars.forEach(b => { b.style.width = '0'; obs.observe(b); });
+function copyText(text, btn) {
+  navigator.clipboard.writeText(text);
+  btn.textContent = 'copied';
+  btn.classList.add('ok');
+  setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('ok'); }, 2000);
+}
+function copyCode(btn) {
+  const code = btn.nextElementSibling.innerText;
+  navigator.clipboard.writeText(code);
+  btn.textContent = 'copied';
+  btn.classList.add('ok');
+  setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('ok'); }, 2000);
+}
+const nav = document.querySelector('nav');
+const blur = document.querySelector('.nav-blur');
+window.addEventListener('scroll', () => {
+  const s = window.scrollY > 40;
+  nav.classList.toggle('scrolled', s);
+  blur.classList.toggle('on', s);
+}, { passive: true });
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const cls = e.target.classList;
+      e.target.style.width = cls.contains('full') ? '100%' : cls.contains('half') ? '50%' : '8%';
+    }
+  });
+}, { threshold: 0.1 });
+document.querySelectorAll('.bar').forEach(b => { b.style.width = '0'; obs.observe(b); });
 </script>
 </body>
 </html>

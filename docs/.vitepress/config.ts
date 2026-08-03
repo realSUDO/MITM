@@ -5,9 +5,10 @@ export default defineConfig({
   description: "Man in the Middle AI SDK — TypeScript-first agent SDK with tools, memory, guardrails, handoffs, and tracing.",
   lang: "en-US",
   base: "/docs/",
+  appearance: "force-dark",
 
   head: [
-    ["link", { rel: "icon", type: "image/svg+xml", href: "/logo.svg" }],
+    ["link", { rel: "icon", type: "image/png", href: "/docs/favicon.png" }],
     ["meta", { name: "theme-color", content: "#6366f1" }],
     ["meta", { property: "og:title", content: "MITM AI SDK" }],
     ["meta", { property: "og:description", content: "TypeScript-first agent SDK — tools, memory, guardrails, handoffs, tracing." }],
