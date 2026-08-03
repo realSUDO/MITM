@@ -13,6 +13,8 @@ export interface ITool {
 	executor: (input: string) => Promise<string>;
 }
 
+export type Interceptor = (message: IMessage) => void;
+
 export class ToolMap {
 	private map: Map<string, ITool> = new Map();
 
@@ -78,9 +80,11 @@ export class Agent {
 	private toolMap: ToolMap;
 	private MAX_ITERATIONS = 30;
 	private openai: OpenAI;
+	private interceptors: Interceptor[];
 
 	constructor(builder: AgentBuilder) {
 		this.toolMap = new ToolMap();
+		this.interceptors = [];
 		this.openai = new OpenAI({
 			apiKey: process.env.OPENAI_API_KEY,
 			baseURL: process.env.BASE_URL || "https://api.aicredits.in/v1",
@@ -101,6 +105,17 @@ export class Agent {
 			
 `;
 		this.messageHistory = [];
+	}
+
+	public attachInterceptor(interceptor: Interceptor) {
+		this.interceptors.push(interceptor);
+		return this;
+	}
+
+	private notifyInterceptors(message: IMessage) {
+		for (const interceptor of this.interceptors) {
+			interceptor(message);
+		}
 	}
 
 	public printSystemPrompt() {
@@ -132,6 +147,7 @@ export class Agent {
 
 			// append LLMResponse to message history
 			this.messageHistory.push({ role: "assistant", content: RawLLMResponse });
+			this.notifyInterceptors({ role: "assistant", content: RawLLMResponse });
 
 			const parsedLLMResponse = JSON.parse(RawLLMResponse) as {
 				step: string;
@@ -169,14 +185,12 @@ export class Agent {
 				}
 
 				const toolResult = await tool.executor(input);
-				this.messageHistory.push({
+				const toolMessage: IMessage = {
 					role: "developer",
-					content: JSON.stringify({
-						tool_name,
-						input,
-						toolResult,
-					}),
-				});
+					content: JSON.stringify({ tool_name, input, toolResult }),
+				};
+				this.messageHistory.push(toolMessage);
+				this.notifyInterceptors(toolMessage);
 				continue;
 			}
 		}

@@ -1,5 +1,7 @@
 import { Agent } from "./app/agent.js";
 import type { ITool } from "./app/agent.js";
+import { exec } from "node:child_process";
+import { writeFile } from "node:fs/promises";
 
 const echoTool: ITool = {
 	name: "echo",
@@ -10,15 +12,47 @@ const echoTool: ITool = {
 	},
 };
 
+const cliAccessTool: ITool = {
+	name: "execCli",
+	description: "Runs a CLI command on user's machine and returns output",
+	doc: "exectCli(cli: string): CLIResponse",
+	executor(cmd) {
+		return new Promise((resolve) => {
+			exec(cmd, (error, stdout, stderr) => {
+				if (error) return resolve(`Error: ${error.message}`);
+				if (stderr) return resolve(`Stderr: ${stderr}`);
+				resolve(stdout);
+			});
+		});
+	},
+};
+
+const fsWriteTool: ITool = {
+	name: "fsWrite",
+	description: "Writes content to a file on the user's machine",
+	doc: 'fsWrite(input: string): string — input must be JSON: { "path": string, "content": string }',
+	async executor(input) {
+		const { path, content } = JSON.parse(input) as { path: string; content: string };
+		await writeFile(path, content, "utf-8");
+		return `File written successfully: ${path}`;
+	},
+};
+
 async function init() {
 	const agent: Agent = Agent.builder()
 		.setInstructions(`You're a joke specialist`)
 		.tool(echoTool)
+		.tool(cliAccessTool)
+		.tool(fsWriteTool)
 		.build();
 
-	const result = await agent.run(
-		"Can you echo back this string using tool call? 'lmao lmao lmao'",
+	agent.attachInterceptor((message) =>
+		console.log(`[${message.role}]: ${message.content}`),
 	);
-	console.log(result)
+
+	const result = await agent.run(
+		"Can you build a simple calculator program in python on my current project? as calc.py and run it using python3 to check if it works.",
+	);
+	console.log(result?.[result.length - 1]);
 }
 init();

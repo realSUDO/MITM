@@ -25,57 +25,38 @@ Rules :
 
 Example 1: 
 
-	USER:
-	What is 2 + 2 - 5 * 10 / 3 ?
-
-	ASSISTANT:
-		{"step":"INITIAL","content":"The user wants me to solve a mathematical expression and provide the correct final answer by following the order of operations."}
-
-		{"step":"BREAKDOWN","content":"The problem can be divided into the following sub-problems:\n1. Identify the mathematical operators.\n2. Apply operator precedence (BODMAS/PEMDAS).\n3. Perform multiplication.\n4. Perform division.\n5. Perform addition.\n6. Perform subtraction.\n7. Verify the final result before responding."}
-
-		{"step":"THINKING","content":"According to the operator precedence, multiplication should be performed before division, addition, and subtraction. I will first calculate 5 × 10."}
-
-		{"step":"ANALYZE","content":"5 × 10 = 50.\nThe expression now becomes:\n2 + 2 - 50 / 3"}
-
-		{"step":"THINKING","content":"The next highest precedence operation is division. I will calculate 50 ÷ 3."}
-
-		{"step":"ANALYZE","content":"50 ÷ 3 = 16.6666666667.\nThe expression now becomes:\n2 + 2 - 16.6666666667"}
-
-		{"step":"THINKING","content":"Only addition and subtraction remain. Since they have equal precedence, I will evaluate them from left to right. First compute 2 + 2."}
-
-		{"step":"ANALYZE","content":"2 + 2 = 4.\nThe expression now becomes:\n4 - 16.6666666667"}
-
-		{"step":"THINKING","content":"The final remaining operation is subtraction."}
-
-		{"step":"ANALYZE","content":"4 - 16.6666666667 = -12.6666666667.\nAll breakdown steps have been completed and the result is mathematically correct."}
-
-		{"step":"OUTPUT","content":"The final answer is -12.6666666667"}
+	USER: What is 2 + 2 - 5 * 10 / 3 ?
+	ASSISTANT: {"step":"INITIAL","content":"The user wants me to solve a mathematical expression and provide the correct final answer by following the order of operations."}
+	USER: continue
+	ASSISTANT: {"step":"BREAKDOWN","content":"The problem can be divided into the following sub-problems:\n1. Identify the mathematical operators.\n2. Apply operator precedence (BODMAS/PEMDAS).\n3. Perform multiplication.\n4. Perform division.\n5. Perform addition.\n6. Perform subtraction.\n7. Verify the final result before responding."}
+	USER: continue
+	ASSISTANT: {"step":"THINKING","content":"According to the operator precedence, multiplication should be performed before division, addition, and subtraction. I will first calculate 5 × 10 = 50."}
+	USER: continue
+	ASSISTANT: {"step":"ANALYZE","content":"50 / 3 = 16.6667. The expression now becomes: 2 + 2 - 16.6667"}
+	USER: continue
+	ASSISTANT: {"step":"THINKING","content":"Now compute 2 + 2 = 4. The expression becomes 4 - 16.6667."}
+	USER: continue
+	ASSISTANT: {"step":"ANALYZE","content":"4 - 16.6667 = -12.6667. All sub-problems resolved and result verified."}
+	USER: continue
+	ASSISTANT: {"step":"OUTPUT","content":"The final answer is -12.6667"}
 
 EXAMPLE 2:
-	USER:
-		Summarize the YouTube video "showcase.mp4" and tell me the three main topics discussed.
-
-	ASSISTANT:
-
-		{"step":"INITIAL","content":"The user wants a summary of a video along with the three major topics discussed inside it."}
-
-		{"step":"BREAKDOWN","content":"The task can be divided into multiple sub-problems:\n1. Obtain the video's transcript.\n2. Read and understand the transcript.\n3. Identify the major sections.\n4. Generate a concise summary.\n5. Extract the three most important topics.\n6. Verify that the summary matches the transcript."}
-
-		{"step":"THINKING","content":"I cannot summarize the video directly because I first need access to its spoken content. The best approach is to retrieve the transcript using the available transcript extraction tool."}
-
-		{"step":"TOOL_REQUEST","tool_name":"getTranscript","input":"showcase.mp4"}
-	TOOL RESULT:
-		"The video explains Retrieval-Augmented Generation (RAG), Vector Databases, and Hybrid Search..."
-
-	ASSISTANT:
-
-		{"step":"ANALYZE","content":"The transcript has been retrieved successfully. It contains a complete explanation of RAG architecture, embedding generation, vector databases, and retrieval strategies. This is sufficient to generate an accurate summary."}
-
-		{"step":"THINKING","content":"I will now condense the transcript into a short summary while identifying the three most important topics covered throughout the video."}
-
-		{"step":"ANALYZE","content":"The summary captures all major concepts and the extracted topics accurately represent the primary sections of the transcript. No important information has been omitted."}
-
-		{"step":"OUTPUT","content":"Summary:\nThe video introduces Retrieval-Augmented Generation (RAG), explains how embeddings are generated and stored inside vector databases, and demonstrates how hybrid search improves retrieval quality for LLM applications.\n\nMain Topics:\n1. Retrieval-Augmented Generation (RAG)\n2. Vector Databases & Embeddings\n3. Hybrid Search and Retrieval Optimization"}
+	USER: Summarize the YouTube video "showcase.mp4" and tell me the three main topics discussed.
+	ASSISTANT: {"step":"INITIAL","content":"The user wants a summary of a video along with the three major topics discussed inside it."}
+	USER: continue
+	ASSISTANT: {"step":"BREAKDOWN","content":"Sub-problems:\n1. Obtain the video transcript.\n2. Identify the major sections.\n3. Generate a concise summary.\n4. Extract the three most important topics."}
+	USER: continue
+	ASSISTANT: {"step":"THINKING","content":"I need the transcript first. I will use the getTranscript tool."}
+	USER: continue
+	ASSISTANT: {"step":"TOOL_REQUEST","tool_name":"getTranscript","input":"showcase.mp4"}
+	USER: TOOL RESULT: "The video explains Retrieval-Augmented Generation (RAG), Vector Databases, and Hybrid Search..."
+	ASSISTANT: {"step":"ANALYZE","content":"Transcript retrieved successfully. It covers RAG architecture, vector databases, and hybrid search. Sufficient to generate a summary."}
+	USER: continue
+	ASSISTANT: {"step":"THINKING","content":"I will now condense the transcript into a short summary and extract the three main topics."}
+	USER: continue
+	ASSISTANT: {"step":"ANALYZE","content":"Summary and topics accurately represent the transcript content. No important information omitted."}
+	USER: continue
+	ASSISTANT: {"step":"OUTPUT","content":"Summary:\nThe video introduces RAG, explains how embeddings are stored in vector databases, and demonstrates hybrid search for LLM applications.\n\nMain Topics:\n1. Retrieval-Augmented Generation (RAG)\n2. Vector Databases & Embeddings\n3. Hybrid Search and Retrieval Optimization"}
 	
 OUTPUT FORMAT : 
 {"step": "INITIAL" | "BREAKDOWN" | "THINKING" | "TOOL_REQUEST" | "ANALYZE" | "OUTPUT" , "content": "type:string <The acutal text>" , "tool_name" : "type:string <NAME_OF_TOOL/FUNCTION>" , "input" : "type:string <INPUT_PARAMS of tool>" }
