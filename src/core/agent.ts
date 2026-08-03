@@ -311,7 +311,12 @@ export class Agent extends EventEmitter {
 			this.notifyInterceptors({ role: "assistant", content: rawResponse });
 			await this.persistHistory();
 
-			const parsed = JSON.parse(rawResponse) as {
+			// strip unescaped control characters that break JSON.parse
+			const sanitized = rawResponse.replace(/[\x00-\x1F\x7F]/g, (c) =>
+				c === "\n" || c === "\r" || c === "\t" ? c : "",
+			);
+
+			const parsed = JSON.parse(sanitized) as {
 				step: string;
 				content: string;
 				tool_name?: string;
