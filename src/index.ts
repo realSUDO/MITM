@@ -107,12 +107,32 @@ const codingAgent = Agent.builder()
 // ─── Run ──────────────────────────────────────────────────────────────────────
 
 async function init() {
-	codingAgent.attachInterceptor((message) =>
-		console.log(`[codingAgent][${message.role}]: ${message.content}`),
+	codingAgent.on("step", (e) =>
+		console.log(`[codingAgent][${e.step}]: ${e.content}`),
 	);
 
-	reviewAgent.attachInterceptor((message) =>
-		console.log(`[reviewAgent][${message.role}]: ${message.content}`),
+	codingAgent.on("tool:start", (e) =>
+		console.log(`[codingAgent][tool:start] ${e.toolName}(${e.input})`),
+	);
+
+	codingAgent.on("tool:end", (e) =>
+		console.log(`[codingAgent][tool:end] ${e.toolName} → ${e.result} (${e.durationMs}ms)`),
+	);
+
+	codingAgent.on("handoff", (e) =>
+		console.log(`[codingAgent][handoff] ${e.fromAgent} → ${e.toAgent}: ${e.reason}`),
+	);
+
+	codingAgent.on("run:complete", (e) =>
+		console.log(`[codingAgent][run:complete] ${e.history.length} messages`),
+	);
+
+	reviewAgent.on("step", (e) =>
+		console.log(`[reviewAgent][${e.step}]: ${e.content}`),
+	);
+
+	reviewAgent.on("run:complete", (e) =>
+		console.log(`[reviewAgent][run:complete] ${e.history.length} messages`),
 	);
 
 	const result = await codingAgent.run(

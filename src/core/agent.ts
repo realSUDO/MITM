@@ -1,3 +1,4 @@
+import { EventEmitter } from "node:events";
 import { HARNESS_PROMPT } from "../app/config.js";
 import type { IMessage, ITool, Interceptor, IModelProvider } from "./types.js";
 import { ToolError } from "./types.js";
@@ -9,6 +10,7 @@ import { validateOutput } from "./schema.js";
 import type { HandoffTarget } from "./handoff.js";
 import type { ITrace } from "./trace.js";
 import { createTrace } from "./trace.js";
+import type { MITMEventMap } from "./events.js";
 
 export class ToolMap {
 	private map: Map<string, ITool> = new Map();
@@ -145,7 +147,10 @@ export class AgentBuilder {
 	}
 }
 
-export class Agent {
+export class Agent extends EventEmitter {
+	declare emit: <K extends keyof MITMEventMap>(event: K, ...args: MITMEventMap[K]) => boolean;
+	declare on: <K extends keyof MITMEventMap>(event: K, listener: (...args: MITMEventMap[K]) => void) => this;
+	declare off: <K extends keyof MITMEventMap>(event: K, listener: (...args: MITMEventMap[K]) => void) => this;
 	private instructions: string;
 	private messageHistory: IMessage[];
 	private toolMap: ToolMap;
@@ -164,6 +169,7 @@ export class Agent {
 	private lastTrace: ITrace | null = null;
 
 	constructor(builder: AgentBuilder) {
+		super();
 		if (!builder.getProvider()) {
 			throw new Error(
 				"[MITM] No model provider set. Call .setProvider(new OpenAIProvider()) on AgentBuilder.",
@@ -201,6 +207,8 @@ export class Agent {
 
 	public attachInterceptor(interceptor: Interceptor) {
 		this.interceptors.push(interceptor);
+		// sugar: also register as a step event listener
+		this.on("step", (e) => interceptor({ role: "assistant", content: e.raw }));
 		return this;
 	}
 
@@ -252,6 +260,7 @@ export class Agent {
 			if (result.action === "block") {
 				trace.errors.push(`Input blocked by "${g.name}": ${result.reason}`);
 				finalize();
+				this.emit("run:failed", { error: `Input blocked by "${g.name}": ${result.reason}`, trace });
 				return `[MITM] Input blocked by guardrail "${g.name}": ${result.reason}`;
 			}
 			if (result.action === "modify") {
@@ -295,6 +304,8 @@ export class Agent {
 			trace.tokenUsage.completionTokens += usage.completionTokens;
 			trace.tokenUsage.totalTokens += usage.totalTokens;
 
+			this.emit("step", { step: parsed.step, content: parsed.content ?? "", raw: rawResponse });
+
 			if (parsed.step.toLowerCase() === "output") {
 				// --- structured output validation ---
 				if (this.outputSchema) {
@@ -318,6 +329,7 @@ export class Agent {
 					if (result.action === "block") {
 						trace.errors.push(`Output blocked by "${g.name}": ${result.reason}`);
 						finalize();
+						this.emit("run:failed", { error: `Output blocked by "${g.name}": ${result.reason}`, trace });
 						return `[MITM] Output blocked by guardrail "${g.name}": ${result.reason}`;
 					}
 					if (result.action === "modify") {
@@ -325,6 +337,7 @@ export class Agent {
 					}
 				}
 				finalize();
+				this.emit("run:complete", { history: this.messageHistory, trace });
 				return this.messageHistory;
 			}
 
@@ -347,6 +360,8 @@ export class Agent {
 					reason: p.reason,
 					timestampMs: Date.now(),
 				});
+
+				this.emit("handoff", { fromAgent: this.agentName, toAgent: targetName, reason: p.reason });
 
 				this.notifyInterceptors({
 					role: "developer",
@@ -407,22 +422,16 @@ export class Agent {
 				const toolStart = Date.now();
 				let toolResult: string;
 				try {
+					this.emit("tool:start", { toolName: tool_name, input: effectiveInput });
 					toolResult = await tool.executor(effectiveInput);
-					trace.toolCalls.push({
-						toolName: tool_name,
-						input: effectiveInput,
-						result: toolResult,
-						durationMs: Date.now() - toolStart,
-					});
+					const durationMs = Date.now() - toolStart;
+					this.emit("tool:end", { toolName: tool_name, input: effectiveInput, result: toolResult, durationMs });
+					trace.toolCalls.push({ toolName: tool_name, input: effectiveInput, result: toolResult, durationMs });
 				} catch (e) {
 					const err = new ToolError("execution-error", tool_name, e instanceof Error ? e.message : String(e));
-					trace.toolCalls.push({
-						toolName: tool_name,
-						input: effectiveInput,
-						result: "",
-						durationMs: Date.now() - toolStart,
-						error: err.message,
-					});
+					const durationMs = Date.now() - toolStart;
+					this.emit("tool:error", { toolName: tool_name, input: effectiveInput, error: err.message });
+					trace.toolCalls.push({ toolName: tool_name, input: effectiveInput, result: "", durationMs, error: err.message });
 					trace.errors.push(err.message);
 					this.messageHistory.push({ role: "developer", content: `ToolError [${err.kind}] on "${tool_name}": ${err.message}` });
 					await this.persistHistory();
@@ -441,5 +450,6 @@ export class Agent {
 		}
 
 		finalize();
+		this.emit("run:failed", { error: "Max iterations reached without OUTPUT.", trace });
 	}
 }

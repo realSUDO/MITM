@@ -13,3 +13,4 @@ export type { GuardrailResult, IInputGuardrail, IOutputGuardrail, IToolGuardrail
 export type { IHandoffContext, HandoffTarget } from "./core/handoff.js";
 export { createHandoffTool } from "./core/handoff.js";
 export type { ITrace, ITraceStep, IToolCall, IHandoffRecord } from "./core/trace.js";
+export type { MITMEventMap, StepEvent, ToolStartEvent, ToolEndEvent, ToolErrorEvent, HandoffEvent, GuardrailTriggeredEvent, RunCompleteEvent, RunFailedEvent } from "./core/events.js";
