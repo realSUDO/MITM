@@ -15,8 +15,8 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build-docs:
-    name: Build VitePress Docs
+  build:
+    name: Build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,21 +28,27 @@ jobs:
 
       - run: npm ci
 
-      - name: Build VitePress
+      - name: Build VitePress docs
         run: npx vitepress build docs
 
-      - name: Copy landing page
+      - name: Assemble site
         run: |
-          cp -r landing/. docs/.vitepress/dist/landing
-          cp landing/CNAME docs/.vitepress/dist/landing/CNAME
+          mkdir -p _site
+          # Landing at root
+          cp -r landing/. _site/
+          # Docs under /docs/
+          mkdir -p _site/docs
+          cp -r docs/.vitepress/dist/. _site/docs/
+          # Root CNAME (for mitm.sud-o.app — main domain)
+          echo "mitm.sud-o.app" > _site/CNAME
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: docs/.vitepress/dist
+          path: _site
 
-  deploy-docs:
-    name: Deploy Docs to GitHub Pages
-    needs: build-docs
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -50,17 +56,3 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
-
-  build-landing:
-    name: Deploy Landing Page
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Deploy landing to gh-pages-landing branch
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./landing
-          publish_branch: gh-pages-landing
-          cname: mitm.sud-o.app

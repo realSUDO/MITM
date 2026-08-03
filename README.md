@@ -16,9 +16,9 @@
 
 <br />
 
-<a href="https://docs.mitm.sud-o.app"><strong>Documentation</strong></a>
+<a href="https://mitm.sud-o.app/docs"><strong>Documentation</strong></a>
 &nbsp;&nbsp;|&nbsp;&nbsp;
-<a href="https://docs.mitm.sud-o.app/guide/quick-start"><strong>Quick Start</strong></a>
+<a href="https://mitm.sud-o.app/docs/guide/quick-start"><strong>Quick Start</strong></a>
 &nbsp;&nbsp;|&nbsp;&nbsp;
 <a href="https://www.npmjs.com/package/mitm-ai"><strong>npm</strong></a>
 &nbsp;&nbsp;|&nbsp;&nbsp;

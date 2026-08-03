@@ -4,6 +4,7 @@ export default defineConfig({
   title: "MITM AI SDK",
   description: "Man in the Middle AI SDK — TypeScript-first agent SDK with tools, memory, guardrails, handoffs, and tracing.",
   lang: "en-US",
+  base: "/docs/",
 
   head: [
     ["link", { rel: "icon", type: "image/svg+xml", href: "/logo.svg" }],
