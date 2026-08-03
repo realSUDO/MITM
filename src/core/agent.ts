@@ -7,6 +7,8 @@ import type { IInputGuardrail, IOutputGuardrail, IToolGuardrail } from "../guard
 import type { IOutputSchema } from "./schema.js";
 import { validateOutput } from "./schema.js";
 import type { HandoffTarget } from "./handoff.js";
+import type { ITrace } from "./trace.js";
+import { createTrace } from "./trace.js";
 
 export class ToolMap {
 	private map: Map<string, ITool> = new Map();
@@ -159,6 +161,7 @@ export class Agent {
 	private maxOutputRetries: number;
 	private agentName: string;
 	private handoffTargets: Map<string, HandoffTarget>;
+	private lastTrace: ITrace | null = null;
 
 	constructor(builder: AgentBuilder) {
 		if (!builder.getProvider()) {
@@ -217,6 +220,10 @@ export class Agent {
 		console.log(this.instructions);
 	}
 
+	public getLastTrace(): ITrace | null {
+		return this.lastTrace;
+	}
+
 	static builder() {
 		return new AgentBuilder();
 	}
@@ -227,11 +234,24 @@ export class Agent {
 			return `[MITM] Handoff loop detected: ${[..._handoffChain, this.agentName].join(" → ")}`;
 		}
 		const handoffChain = [..._handoffChain, this.agentName];
+
+		// --- init trace ---
+		const trace = createTrace(this.agentName);
+		this.lastTrace = trace;
+
+		const finalize = () => {
+			trace.endTimeMs = Date.now();
+			trace.durationMs = trace.endTimeMs - trace.startTimeMs;
+			trace.totalSteps = trace.steps.length;
+		};
+
 		// --- input guardrails ---
 		let effectiveQuery = query;
 		for (const g of this.inputGuardrails) {
 			const result = await g.run(effectiveQuery);
 			if (result.action === "block") {
+				trace.errors.push(`Input blocked by "${g.name}": ${result.reason}`);
+				finalize();
 				return `[MITM] Input blocked by guardrail "${g.name}": ${result.reason}`;
 			}
 			if (result.action === "modify") {
@@ -248,7 +268,7 @@ export class Agent {
 		await this.persistHistory();
 
 		for (let i = 0; i <= this.MAX_ITERATIONS; i++) {
-			const rawResponse = await this.provider.chat(
+			const { text: rawResponse, usage } = await this.provider.chat(
 				this.instructions,
 				this.messageHistory,
 			);
@@ -263,6 +283,16 @@ export class Agent {
 				tool_name?: string;
 				input?: string;
 			};
+
+			// --- record step in trace ---
+			trace.steps.push({
+				index: i,
+				step: parsed.step,
+				content: parsed.content ?? "",
+				timestampMs: Date.now(),
+			});
+			// attach token usage to last step
+			void usage; // usage is available if needed for per-step tracking
 
 			if (parsed.step.toLowerCase() === "output") {
 				// --- structured output validation ---
@@ -285,12 +315,15 @@ export class Agent {
 				for (const g of this.outputGuardrails) {
 					const result = await g.run(finalOutput);
 					if (result.action === "block") {
+						trace.errors.push(`Output blocked by "${g.name}": ${result.reason}`);
+						finalize();
 						return `[MITM] Output blocked by guardrail "${g.name}": ${result.reason}`;
 					}
 					if (result.action === "modify") {
 						finalOutput = result.modified;
 					}
 				}
+				finalize();
 				return this.messageHistory;
 			}
 
@@ -300,19 +333,26 @@ export class Agent {
 				const target = this.handoffTargets.get(targetName);
 
 				if (!target) {
-					this.messageHistory.push({
-						role: "developer",
-						content: `[MITM] Handoff failed: no agent named "${targetName}" is registered.`,
-					});
+					const errMsg = `Handoff failed: no agent named "${targetName}" is registered.`;
+					trace.errors.push(errMsg);
+					this.messageHistory.push({ role: "developer", content: `[MITM] ${errMsg}` });
 					await this.persistHistory();
 					continue;
 				}
+
+				trace.handoffs.push({
+					fromAgent: this.agentName,
+					toAgent: targetName,
+					reason: p.reason,
+					timestampMs: Date.now(),
+				});
 
 				this.notifyInterceptors({
 					role: "developer",
 					content: `[HANDOFF] ${this.agentName} → ${targetName}: ${p.reason}`,
 				});
 
+				finalize();
 				const handoffQuery = `Context from ${this.agentName}: ${p.content}\n\nContinue the task: ${p.reason}`;
 				return target.run(handoffQuery, handoffChain);
 			}
@@ -346,6 +386,7 @@ export class Agent {
 				const tool = this.toolMap.get(tool_name);
 				if (!tool) {
 					const err = new ToolError("tool-not-found", tool_name, `Tool "${tool_name}" not found.`);
+					trace.errors.push(err.message);
 					this.messageHistory.push({ role: "developer", content: `ToolError [${err.kind}]: ${err.message}` });
 					await this.persistHistory();
 					continue;
@@ -355,17 +396,33 @@ export class Agent {
 					const validation = validateToolInput(effectiveInput, tool.inputSchema);
 					if (!validation.valid) {
 						const err = new ToolError("validation-failed", tool_name, validation.errors.join(" "));
+						trace.errors.push(err.message);
 						this.messageHistory.push({ role: "developer", content: `ToolError [${err.kind}] on "${tool_name}": ${err.message}` });
 						await this.persistHistory();
 						continue;
 					}
 				}
 
+				const toolStart = Date.now();
 				let toolResult: string;
 				try {
 					toolResult = await tool.executor(effectiveInput);
+					trace.toolCalls.push({
+						toolName: tool_name,
+						input: effectiveInput,
+						result: toolResult,
+						durationMs: Date.now() - toolStart,
+					});
 				} catch (e) {
 					const err = new ToolError("execution-error", tool_name, e instanceof Error ? e.message : String(e));
+					trace.toolCalls.push({
+						toolName: tool_name,
+						input: effectiveInput,
+						result: "",
+						durationMs: Date.now() - toolStart,
+						error: err.message,
+					});
+					trace.errors.push(err.message);
 					this.messageHistory.push({ role: "developer", content: `ToolError [${err.kind}] on "${tool_name}": ${err.message}` });
 					await this.persistHistory();
 					continue;
@@ -381,5 +438,7 @@ export class Agent {
 				continue;
 			}
 		}
+
+		finalize();
 	}
 }

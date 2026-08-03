@@ -126,6 +126,30 @@ async function init() {
 		console.log("\n=== RESULT ===");
 		console.log(result);
 	}
+
+	const trace = codingAgent.getLastTrace();
+	if (trace) {
+		console.log("\n=== TRACE ===");
+		console.log(`runId      : ${trace.runId}`);
+		console.log(`agent      : ${trace.agentName}`);
+		console.log(`duration   : ${trace.durationMs}ms`);
+		console.log(`steps      : ${trace.totalSteps}`);
+		console.log(`toolCalls  : ${trace.toolCalls.length}`);
+		console.log(`handoffs   : ${trace.handoffs.length}`);
+		console.log(`errors     : ${trace.errors.length}`);
+		if (trace.toolCalls.length > 0) {
+			console.log("\nTool Calls:");
+			for (const tc of trace.toolCalls) {
+				console.log(`  [${tc.toolName}] ${tc.durationMs}ms${tc.error ? ` ERROR: ${tc.error}` : ""}`);
+			}
+		}
+		if (trace.handoffs.length > 0) {
+			console.log("\nHandoffs:");
+			for (const h of trace.handoffs) {
+				console.log(`  ${h.fromAgent} → ${h.toAgent}: ${h.reason}`);
+			}
+		}
+	}
 }
 
 init();

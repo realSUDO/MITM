@@ -1,5 +1,5 @@
 import { OpenAI } from "openai";
-import type { IMessage, IModelProvider } from "../core/types.js";
+import type { IMessage, IModelProvider, IModelResponse } from "../core/types.js";
 
 export interface OpenAIProviderOptions {
 	apiKey?: string;
@@ -19,7 +19,7 @@ export class OpenAIProvider implements IModelProvider {
 		this.model = options.model ?? "gpt-4o-mini";
 	}
 
-	async chat(systemPrompt: string, history: IMessage[]): Promise<string> {
+	async chat(systemPrompt: string, history: IMessage[]): Promise<IModelResponse> {
 		const response = await this.client.chat.completions.create({
 			model: this.model,
 			messages: [
@@ -30,6 +30,13 @@ export class OpenAIProvider implements IModelProvider {
 				})),
 			],
 		});
-		return response.choices[0]?.message?.content ?? "";
+		return {
+			text: response.choices[0]?.message?.content ?? "",
+			usage: {
+				promptTokens: response.usage?.prompt_tokens ?? 0,
+				completionTokens: response.usage?.completion_tokens ?? 0,
+				totalTokens: response.usage?.total_tokens ?? 0,
+			},
+		};
 	}
 }

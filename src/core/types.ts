@@ -23,8 +23,19 @@ export interface ITool {
 
 export type Interceptor = (message: IMessage) => void;
 
+export interface IModelUsage {
+	promptTokens: number;
+	completionTokens: number;
+	totalTokens: number;
+}
+
+export interface IModelResponse {
+	text: string;
+	usage: IModelUsage;
+}
+
 export interface IModelProvider {
-	chat(systemPrompt: string, history: IMessage[]): Promise<string>;
+	chat(systemPrompt: string, history: IMessage[]): Promise<IModelResponse>;
 }
 
 export type ToolErrorKind = "tool-not-found" | "validation-failed" | "execution-error";

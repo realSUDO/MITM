@@ -1,5 +1,5 @@
 // MITM AI SDK — public API
-export type { IMessage, ITool, IToolInputSchema, IToolInputField, Interceptor, IModelProvider } from "./core/types.js";
+export type { IMessage, ITool, IToolInputSchema, IToolInputField, Interceptor, IModelProvider, IModelUsage, IModelResponse } from "./core/types.js";
 export { ToolError } from "./core/types.js";
 export { Agent, AgentBuilder, ToolMap } from "./core/agent.js";
 export { OpenAIProvider } from "./providers/openai.js";
@@ -12,3 +12,4 @@ export { FileAdapter } from "./memory/FileAdapter.js";
 export type { GuardrailResult, IInputGuardrail, IOutputGuardrail, IToolGuardrail } from "./guardrails/types.js";
 export type { IHandoffContext, HandoffTarget } from "./core/handoff.js";
 export { createHandoffTool } from "./core/handoff.js";
+export type { ITrace, ITraceStep, IToolCall, IHandoffRecord } from "./core/trace.js";
