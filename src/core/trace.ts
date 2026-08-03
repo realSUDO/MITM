@@ -33,6 +33,7 @@ export interface ITrace {
 	handoffs: IHandoffRecord[];
 	errors: string[];
 	totalSteps: number;
+	tokenUsage: { promptTokens: number; completionTokens: number; totalTokens: number };
 }
 
 export function createTrace(agentName: string): ITrace {
@@ -47,5 +48,6 @@ export function createTrace(agentName: string): ITrace {
 		handoffs: [],
 		errors: [],
 		totalSteps: 0,
+		tokenUsage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
 	};
 }

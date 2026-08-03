@@ -291,8 +291,9 @@ export class Agent {
 				content: parsed.content ?? "",
 				timestampMs: Date.now(),
 			});
-			// attach token usage to last step
-			void usage; // usage is available if needed for per-step tracking
+			trace.tokenUsage.promptTokens += usage.promptTokens;
+			trace.tokenUsage.completionTokens += usage.completionTokens;
+			trace.tokenUsage.totalTokens += usage.totalTokens;
 
 			if (parsed.step.toLowerCase() === "output") {
 				// --- structured output validation ---

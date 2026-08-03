@@ -137,6 +137,7 @@ async function init() {
 		console.log(`toolCalls  : ${trace.toolCalls.length}`);
 		console.log(`handoffs   : ${trace.handoffs.length}`);
 		console.log(`errors     : ${trace.errors.length}`);
+		console.log(`tokens     : ${trace.tokenUsage.totalTokens} (prompt: ${trace.tokenUsage.promptTokens}, completion: ${trace.tokenUsage.completionTokens})`);
 		if (trace.toolCalls.length > 0) {
 			console.log("\nTool Calls:");
 			for (const tc of trace.toolCalls) {
