@@ -1,0 +1,8 @@
+src/
+.mitm-sessions/
+.env
+*.ts
+!*.d.ts
+tsconfig.json
+*.md
+!README.md

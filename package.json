@@ -1,7 +1,7 @@
 {
   "name": "mitm-ai",
   "version": "0.1.0",
-  "description": "Man in the Middle AI SDK — a TypeScript-first agent SDK with tools, memory, guardrails, handoffs, and tracing.",
+  "description": "Man in the Middle AI SDK — TypeScript-first agent SDK with tools, memory, guardrails, handoffs, tracing, and multi-provider support.",
   "main": "./dist/sdk.js",
   "types": "./dist/sdk.d.ts",
   "exports": {
@@ -10,15 +10,29 @@
       "types": "./dist/sdk.d.ts"
     }
   },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
     "start": "node --env-file=.env dist/index.js",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
   },
-  "keywords": ["ai", "agent", "sdk", "llm", "tools", "mitm"],
+  "keywords": ["ai", "agent", "sdk", "llm", "tools", "mitm", "openai", "typescript", "guardrails", "handoff", "tracing"],
+  "author": "",
   "license": "MIT",
   "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/YOUR_USERNAME/mitm-ai"
+  },
   "devDependencies": {
     "@types/node": "^26.1.2"
   },
