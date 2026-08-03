@@ -10,30 +10,64 @@
   <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    :root{--bg:#080808;--bg1:#101010;--bg2:#141414;--border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.12);--t:#efefef;--t2:#a0a0a0;--t3:#484848;--p:#b794f4;--p2:#9f7aea;--pdim:rgba(183,148,244,.1);--g:#4ade80;--sans:"Geist",system-ui,sans-serif;--mono:"Geist Mono",monospace}
+    :root{
+      --bg:#080808;--bg1:#101010;--bg2:#141414;
+      --border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.12);
+      --t:#efefef;--t2:#a0a0a0;--t3:#484848;
+      --p:#b794f4;--p2:#9f7aea;--pdim:rgba(183,148,244,.1);
+      --g:#4ade80;
+      --sans:"Geist",system-ui,sans-serif;--mono:"Geist Mono",monospace;
+    }
     html{scroll-behavior:smooth}
     body{font-family:var(--sans);background:var(--bg);color:var(--t);-webkit-font-smoothing:antialiased;overflow-x:hidden}
     a{text-decoration:none;color:inherit}
 
-    /* scroll blur strip under nav */
-    .nav-blur{position:fixed;top:0;left:0;right:0;height:72px;z-index:49;pointer-events:none;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);mask-image:linear-gradient(to bottom,black 40%,transparent 100%);-webkit-mask-image:linear-gradient(to bottom,black 40%,transparent 100%);opacity:0;transition:opacity .3s}
-    .nav-blur.visible{opacity:1}
-    nav{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:50;display:flex;align-items:center;justify-content:space-between;padding:0 8px 0 20px;height:44px;background:rgba(16,16,16,.85);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--border2);border-radius:99px;gap:4px;min-width:560px;animation:navIn .5s cubic-bezier(.16,1,.3,1) both;box-shadow:0 4px 24px rgba(0,0,0,.4);transition:min-width .35s cubic-bezier(.16,1,.3,1),padding .35s,height .35s,top .35s,box-shadow .35s}
-    nav.scrolled{min-width:420px;height:38px;top:12px;padding:0 6px 0 16px;box-shadow:0 8px 32px rgba(0,0,0,.6);background:rgba(12,12,12,.92)}
-    @keyframes navIn{from{opacity:0;transform:translateX(-50%) translateY(-12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
-    .logo{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--t);transition:font-size .35s}
+    /* NAV BLUR UNDERLAY */
+    .nav-blur{
+      position:fixed;top:0;left:0;right:0;height:80px;z-index:49;
+      pointer-events:none;
+      backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+      mask-image:linear-gradient(to bottom,black 30%,transparent 100%);
+      -webkit-mask-image:linear-gradient(to bottom,black 30%,transparent 100%);
+      opacity:0;transition:opacity .4s;
+    }
+    .nav-blur.on{opacity:1}
+
+    /* FLOATING PILL NAV */
+    nav{
+      position:fixed;top:16px;left:50%;transform:translateX(-50%);
+      z-index:50;display:flex;align-items:center;gap:4px;
+      padding:0 8px 0 20px;height:44px;min-width:580px;
+      background:rgba(15,15,15,.88);
+      backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+      border:1px solid var(--border2);border-radius:99px;
+      box-shadow:0 4px 28px rgba(0,0,0,.45);
+      animation:navIn .55s cubic-bezier(.16,1,.3,1) both;
+      transition:min-width .4s cubic-bezier(.16,1,.3,1),
+                 height .4s cubic-bezier(.16,1,.3,1),
+                 top .4s cubic-bezier(.16,1,.3,1),
+                 padding .4s cubic-bezier(.16,1,.3,1),
+                 box-shadow .4s;
+    }
+    nav.scrolled{min-width:440px;height:38px;top:10px;padding:0 6px 0 16px;box-shadow:0 8px 40px rgba(0,0,0,.65)}
+    @keyframes navIn{
+      from{opacity:0;transform:translateX(-50%) translateY(-14px)}
+      to{opacity:1;transform:translateX(-50%) translateY(0)}
+    }
+    .logo{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--t);flex:1;transition:font-size .4s}
     nav.scrolled .logo{font-size:12px}
     .logo b{color:var(--p);font-weight:500}
     .nav-r{display:flex;align-items:center;gap:2px}
-    .nl{font-size:13px;color:var(--t2);padding:5px 12px;border-radius:99px;transition:color .15s,background .15s,font-size .35s}
+    .nl{font-size:13px;color:var(--t2);padding:5px 12px;border-radius:99px;transition:color .15s,background .15s,font-size .4s,padding .4s;white-space:nowrap}
     nav.scrolled .nl{font-size:12px;padding:4px 10px}
     .nl:hover{color:var(--t);background:rgba(255,255,255,.06)}
-    .nb{font-size:13px;font-weight:500;padding:6px 16px;border-radius:99px;background:var(--t);color:#000;margin-left:4px;transition:background .15s,transform .1s,font-size .35s,padding .35s}
+    .nb{font-size:13px;font-weight:500;padding:6px 16px;border-radius:99px;background:var(--t);color:#000;margin-left:4px;transition:background .15s,transform .1s,font-size .4s,padding .4s;white-space:nowrap}
     nav.scrolled .nb{font-size:12px;padding:5px 13px}
-    .nb:hover{background:#ddd;transform:scale(1.02)}
+    .nb:hover{background:#e0e0e0;transform:scale(1.03)}
 
+    /* HERO */
     .hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:100px 24px 60px;position:relative;overflow:hidden}
-    .hero-glow{position:absolute;top:-180px;left:50%;transform:translateX(-50%);width:720px;height:720px;border-radius:50%;background:radial-gradient(circle,rgba(183,148,244,.11) 0%,transparent 65%);pointer-events:none}
+    .hero-glow{position:absolute;top:-200px;left:50%;transform:translateX(-50%);width:740px;height:740px;border-radius:50%;background:radial-gradient(circle,rgba(183,148,244,.11) 0%,transparent 65%);pointer-events:none}
     .hero-grid{position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);background-size:44px 44px;mask-image:radial-gradient(ellipse 65% 55% at 50% 50%,black,transparent)}
     .tag{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;color:var(--p);background:var(--pdim);border:1px solid rgba(183,148,244,.18);padding:4px 12px;border-radius:99px;margin-bottom:26px;letter-spacing:.04em}
     .tag-dot{width:5px;height:5px;border-radius:50%;background:var(--p);animation:blink 2s ease infinite}
@@ -42,12 +76,13 @@
     h1 .hi{color:var(--p)}
     .sub{margin-top:22px;max-width:400px;font-size:16px;line-height:1.72;color:var(--t2)}
     .hact{display:flex;gap:8px;margin-top:30px;flex-wrap:wrap;justify-content:center}
-    .btn{display:inline-flex;align-items:center;gap:8px;padding:9px 20px;border-radius:7px;font-size:14px;font-weight:500;transition:all .15s;border:none;cursor:pointer;font-family:var(--sans)}
-    .bp{background:var(--t);color:#000}.bp:hover{background:#ddd;transform:translateY(-1px)}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:9px 20px;border-radius:99px;font-size:14px;font-weight:500;transition:all .15s;border:none;cursor:pointer;font-family:var(--sans)}
+    .bp{background:var(--t);color:#000}.bp:hover{background:#e0e0e0;transform:translateY(-1px)}
     .bs{background:transparent;color:var(--t);border:1px solid var(--border2)}.bs:hover{border-color:rgba(255,255,255,.22);transform:translateY(-1px)}
     .install{margin-top:26px;display:inline-flex;align-items:center;gap:10px;background:var(--bg1);border:1px solid var(--border);border-radius:8px;padding:9px 18px;font-family:var(--mono);font-size:13px}
     .install .ds{color:var(--t3)}.install .pkg{color:var(--p)}
 
+    /* TICKER */
     .ticker{border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:12px 0;overflow:hidden;position:relative}
     .ticker::before,.ticker::after{content:"";position:absolute;top:0;bottom:0;width:80px;z-index:2}
     .ticker::before{left:0;background:linear-gradient(90deg,var(--bg),transparent)}
@@ -56,12 +91,14 @@
     .ti{font-family:var(--mono);font-size:11px;color:var(--t3);white-space:nowrap;letter-spacing:.08em;text-transform:uppercase}
     @keyframes tick{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 
+    /* LAYOUT */
     .wrap{max-width:1060px;margin:0 auto;padding:0 32px}
     section{padding:84px 0}
     .sl{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--p);margin-bottom:14px}
     h2{font-size:clamp(28px,4vw,42px);font-weight:700;letter-spacing:-.04em;line-height:1.1;color:var(--t)}
     .sd{margin-top:12px;font-size:15px;color:var(--t2);line-height:1.7;max-width:460px}
 
+    /* FEATURE GRID */
     .fgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;margin-top:44px;background:var(--border);border-radius:12px;overflow:hidden;border:1px solid var(--border)}
     @media(max-width:720px){.fgrid{grid-template-columns:1fr}}
     .fc{background:var(--bg);padding:26px;transition:background .15s;display:flex;flex-direction:column;gap:10px}
@@ -71,11 +108,13 @@
     .fc p{font-size:13px;color:var(--t2);line-height:1.65;flex:1}
     .fc-link{font-family:var(--mono);font-size:11px;color:var(--p);margin-top:4px}
 
+    /* CODE SPLIT */
     .split{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center}
     @media(max-width:720px){.split{grid-template-columns:1fr}}
     pre{background:var(--bg1);border:1px solid var(--border);border-radius:10px;padding:22px;overflow-x:auto;font-family:var(--mono);font-size:12px;line-height:1.85;color:var(--t2)}
     .kw{color:#c4b5fd}.fn{color:#93c5fd}.st{color:#86efac}.cm{color:var(--t3)}.op{color:var(--t2)}.tp{color:#f9a8d4}.nu{color:#fda4af}
 
+    /* COMPARISON */
     .compare{margin-top:44px}
     .chdr{display:grid;grid-template-columns:190px repeat(4,1fr);gap:12px;padding:8px 16px;margin-bottom:4px}
     .ch{font-family:var(--mono);font-size:11px;color:var(--t3);letter-spacing:.06em;text-transform:uppercase}
@@ -84,11 +123,12 @@
     .crow:hover{background:var(--bg1)}
     .cl{font-size:13px;color:var(--t2)}
     .bar-w{height:5px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden}
-    .bar{height:100%;border-radius:99px}
-    .full{background:var(--p);width:100%}
-    .half{background:var(--t3);width:50%}
-    .none-bar{background:var(--t3);width:8%;opacity:.25}
+    .bar{height:100%;border-radius:99px;width:0;transition:width 1s cubic-bezier(.16,1,.3,1)}
+    .bar.full{background:var(--p);width:100%}
+    .bar.half{background:var(--t3);width:50%}
+    .bar.low{background:var(--t3);width:8%;opacity:.3}
 
+    /* CTA */
     .cta{text-align:center;padding:88px 24px;border-top:1px solid var(--border)}
     .cta h2{margin-bottom:12px}
     .cta p{color:var(--t2);margin-bottom:28px;font-size:15px}
@@ -137,7 +177,6 @@
 </div>
 
 <div class="wrap">
-
   <section>
     <div class="sl">Core Features</div>
     <h2>Everything an agent needs</h2>
@@ -193,17 +232,16 @@ agent<span class="op">.</span><span class="fn">on</span><span class="op">(</span
         <span class="ch">Vercel AI</span>
         <span class="ch">OpenAI SDK</span>
       </div>
-      <div class="crow"><span class="cl">Tool guardrails</span><div class="bar-w"><div class="bar full"></div></div><div class="bar-w"><div class="bar none-bar"></div></div><div class="bar-w"><div class="bar none-bar"></div></div><div class="bar-w"><div class="bar none-bar"></div></div></div>
-      <div class="crow"><span class="cl">Full run tracing</span><div class="bar-w"><div class="bar full"></div></div><div class="bar-w"><div class="bar half"></div></div><div class="bar-w"><div class="bar none-bar"></div></div><div class="bar-w"><div class="bar none-bar"></div></div></div>
-      <div class="crow"><span class="cl">Session persistence</span><div class="bar-w"><div class="bar full"></div></div><div class="bar-w"><div class="bar full" style="background:var(--t3)"></div></div><div class="bar-w"><div class="bar none-bar"></div></div><div class="bar-w"><div class="bar none-bar"></div></div></div>
-      <div class="crow"><span class="cl">Multi-agent handoffs</span><div class="bar-w"><div class="bar full"></div></div><div class="bar-w"><div class="bar full" style="background:var(--t3)"></div></div><div class="bar-w"><div class="bar none-bar"></div></div><div class="bar-w"><div class="bar none-bar"></div></div></div>
-      <div class="crow"><span class="cl">Stuck loop detection</span><div class="bar-w"><div class="bar full"></div></div><div class="bar-w"><div class="bar none-bar"></div></div><div class="bar-w"><div class="bar none-bar"></div></div><div class="bar-w"><div class="bar none-bar"></div></div></div>
-      <div class="crow"><span class="cl">No framework lock-in</span><div class="bar-w"><div class="bar full"></div></div><div class="bar-w"><div class="bar none-bar"></div></div><div class="bar-w"><div class="bar half"></div></div><div class="bar-w"><div class="bar full" style="background:var(--t3)"></div></div></div>
-      <div class="crow"><span class="cl">Pluggable providers</span><div class="bar-w"><div class="bar full"></div></div><div class="bar-w"><div class="bar full" style="background:var(--t3)"></div></div><div class="bar-w"><div class="bar full" style="background:var(--t3)"></div></div><div class="bar-w"><div class="bar none-bar"></div></div></div>
+      <div class="crow"><span class="cl">Tool guardrails</span><div class="bar-w"><div class="bar full"></div></div><div class="bar-w"><div class="bar low"></div></div><div class="bar-w"><div class="bar low"></div></div><div class="bar-w"><div class="bar low"></div></div></div>
+      <div class="crow"><span class="cl">Full run tracing</span><div class="bar-w"><div class="bar full"></div></div><div class="bar-w"><div class="bar half"></div></div><div class="bar-w"><div class="bar low"></div></div><div class="bar-w"><div class="bar low"></div></div></div>
+      <div class="crow"><span class="cl">Session persistence</span><div class="bar-w"><div class="bar full"></div></div><div class="bar-w"><div class="bar full" style="background:var(--t3)"></div></div><div class="bar-w"><div class="bar low"></div></div><div class="bar-w"><div class="bar low"></div></div></div>
+      <div class="crow"><span class="cl">Multi-agent handoffs</span><div class="bar-w"><div class="bar full"></div></div><div class="bar-w"><div class="bar full" style="background:var(--t3)"></div></div><div class="bar-w"><div class="bar low"></div></div><div class="bar-w"><div class="bar low"></div></div></div>
+      <div class="crow"><span class="cl">Stuck loop detection</span><div class="bar-w"><div class="bar full"></div></div><div class="bar-w"><div class="bar low"></div></div><div class="bar-w"><div class="bar low"></div></div><div class="bar-w"><div class="bar low"></div></div></div>
+      <div class="crow"><span class="cl">No framework lock-in</span><div class="bar-w"><div class="bar full"></div></div><div class="bar-w"><div class="bar low"></div></div><div class="bar-w"><div class="bar half"></div></div><div class="bar-w"><div class="bar full" style="background:var(--t3)"></div></div></div>
+      <div class="crow"><span class="cl">Pluggable providers</span><div class="bar-w"><div class="bar full"></div></div><div class="bar-w"><div class="bar full" style="background:var(--t3)"></div></div><div class="bar-w"><div class="bar full" style="background:var(--t3)"></div></div><div class="bar-w"><div class="bar low"></div></div></div>
       <div class="crow"><span class="cl">TypeScript-first</span><div class="bar-w"><div class="bar full"></div></div><div class="bar-w"><div class="bar half"></div></div><div class="bar-w"><div class="bar full" style="background:var(--t3)"></div></div><div class="bar-w"><div class="bar full" style="background:var(--t3)"></div></div></div>
     </div>
   </section>
-
 </div>
 
 <div class="cta">
@@ -230,10 +268,21 @@ agent<span class="op">.</span><span class="fn">on</span><span class="op">(</span
   const nav = document.querySelector('nav');
   const blur = document.querySelector('.nav-blur');
   window.addEventListener('scroll', () => {
-    const scrolled = window.scrollY > 40;
-    nav.classList.toggle('scrolled', scrolled);
-    blur.classList.toggle('visible', scrolled);
+    const s = window.scrollY > 40;
+    nav.classList.toggle('scrolled', s);
+    blur.classList.toggle('on', s);
   }, { passive: true });
+
+  // animate bars into view
+  const bars = document.querySelectorAll('.bar');
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.style.width = e.target.classList.contains('full') ? '100%' : e.target.classList.contains('half') ? '50%' : '8%';
+      }
+    });
+  }, { threshold: 0.1 });
+  bars.forEach(b => { b.style.width = '0'; obs.observe(b); });
 </script>
 </body>
 </html>
