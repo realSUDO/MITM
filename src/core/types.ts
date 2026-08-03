@@ -18,6 +18,8 @@ export interface ITool {
 	description: string;
 	doc?: string;
 	inputSchema?: IToolInputSchema;
+	maxRetries?: number;
+	timeoutMs?: number;
 	executor: (input: string) => Promise<string>;
 }
 

@@ -54,6 +54,9 @@ export class AgentBuilder {
 	private maxOutputRetries: number = 3;
 	private agentName: string = "agent";
 	private handoffTargets: Map<string, HandoffTarget> = new Map();
+	private timeoutMs: number | undefined;
+	private maxIterations: number = 30;
+	private stuckLoopThreshold: number = 4;
 
 	constructor() {
 		this.toolList = [];
@@ -142,6 +145,14 @@ export class AgentBuilder {
 
 	public getHandoffTargets() { return this.handoffTargets; }
 
+	public setTimeout(ms: number) { this.timeoutMs = ms; return this; }
+	public setMaxIterations(n: number) { this.maxIterations = n; return this; }
+	public setStuckLoopThreshold(n: number) { this.stuckLoopThreshold = n; return this; }
+
+	public getTimeout() { return this.timeoutMs; }
+	public getMaxIterations() { return this.maxIterations; }
+	public getStuckLoopThreshold() { return this.stuckLoopThreshold; }
+
 	public build() {
 		return new Agent(this);
 	}
@@ -154,7 +165,7 @@ export class Agent extends EventEmitter {
 	private instructions: string;
 	private messageHistory: IMessage[];
 	private toolMap: ToolMap;
-	private MAX_ITERATIONS = 30;
+	private MAX_ITERATIONS: number;
 	private provider: IModelProvider;
 	private interceptors: Interceptor[];
 	private memoryAdapter: IMemoryAdapter | undefined;
@@ -167,6 +178,8 @@ export class Agent extends EventEmitter {
 	private agentName: string;
 	private handoffTargets: Map<string, HandoffTarget>;
 	private lastTrace: ITrace | null = null;
+	private timeoutMs: number | undefined;
+	private stuckLoopThreshold: number;
 
 	constructor(builder: AgentBuilder) {
 		super();
@@ -188,6 +201,9 @@ export class Agent extends EventEmitter {
 		this.maxOutputRetries = builder.getMaxOutputRetries();
 		this.agentName = builder.getName();
 		this.handoffTargets = builder.getHandoffTargets();
+		this.timeoutMs = builder.getTimeout();
+		this.MAX_ITERATIONS = builder.getMaxIterations();
+		this.stuckLoopThreshold = builder.getStuckLoopThreshold();
 
 		for (const t of builder.getToolList() ?? []) {
 			this.toolMap.register(t);
@@ -246,6 +262,15 @@ export class Agent extends EventEmitter {
 		// --- init trace ---
 		const trace = createTrace(this.agentName);
 		this.lastTrace = trace;
+
+		// --- agent-level timeout ---
+		let timedOut = false;
+		const timeoutHandle = this.timeoutMs
+			? setTimeout(() => { timedOut = true; }, this.timeoutMs)
+			: null;
+
+		// --- stuck-loop detection ---
+		const recentSteps: string[] = [];
 
 		const finalize = () => {
 			trace.endTimeMs = Date.now();
@@ -306,6 +331,30 @@ export class Agent extends EventEmitter {
 
 			this.emit("step", { step: parsed.step, content: parsed.content ?? "", raw: rawResponse });
 
+			// --- agent-level timeout check ---
+			if (timedOut) {
+				if (timeoutHandle) clearTimeout(timeoutHandle);
+				const errMsg = `Agent "${this.agentName}" timed out after ${this.timeoutMs}ms.`;
+				trace.errors.push(errMsg);
+				finalize();
+				this.emit("run:failed", { error: errMsg, trace });
+				return errMsg;
+			}
+
+			// --- stuck-loop detection ---
+			recentSteps.push(parsed.step.toLowerCase());
+			if (recentSteps.length > this.stuckLoopThreshold) recentSteps.shift();
+			if (
+				recentSteps.length === this.stuckLoopThreshold &&
+				recentSteps.every((s) => s === recentSteps[0])
+			) {
+				const errMsg = `[MITM] Stuck loop detected: step "${recentSteps[0]}" repeated ${this.stuckLoopThreshold} times.`;
+				trace.errors.push(errMsg);
+				this.messageHistory.push({ role: "developer", content: `${errMsg} Forcing OUTPUT.` });
+				await this.persistHistory();
+				recentSteps.length = 0;
+			}
+
 			if (parsed.step.toLowerCase() === "output") {
 				// --- structured output validation ---
 				if (this.outputSchema) {
@@ -337,6 +386,7 @@ export class Agent extends EventEmitter {
 					}
 				}
 				finalize();
+				if (timeoutHandle) clearTimeout(timeoutHandle);
 				this.emit("run:complete", { history: this.messageHistory, trace });
 				return this.messageHistory;
 			}
@@ -420,20 +470,44 @@ export class Agent extends EventEmitter {
 				}
 
 				const toolStart = Date.now();
-				let toolResult: string;
-				try {
-					this.emit("tool:start", { toolName: tool_name, input: effectiveInput });
-					toolResult = await tool.executor(effectiveInput);
-					const durationMs = Date.now() - toolStart;
-					this.emit("tool:end", { toolName: tool_name, input: effectiveInput, result: toolResult, durationMs });
-					trace.toolCalls.push({ toolName: tool_name, input: effectiveInput, result: toolResult, durationMs });
-				} catch (e) {
-					const err = new ToolError("execution-error", tool_name, e instanceof Error ? e.message : String(e));
+				let toolResult!: string;
+				const maxRetries = tool.maxRetries ?? 0;
+				let lastError: string = "";
+				let succeeded = false;
+
+				for (let attempt = 0; attempt <= maxRetries; attempt++) {
+					try {
+						this.emit("tool:start", { toolName: tool_name, input: effectiveInput });
+
+						const execPromise = tool.executor(effectiveInput);
+						const result = tool.timeoutMs
+							? await Promise.race([
+								execPromise,
+								new Promise<never>((_, reject) =>
+									setTimeout(() => reject(new Error(`Tool "${tool_name}" timed out after ${tool.timeoutMs}ms`)), tool.timeoutMs),
+								),
+							])
+							: await execPromise;
+
+						toolResult = result;
+						const durationMs = Date.now() - toolStart;
+						this.emit("tool:end", { toolName: tool_name, input: effectiveInput, result: toolResult, durationMs });
+						trace.toolCalls.push({ toolName: tool_name, input: effectiveInput, result: toolResult, durationMs });
+						succeeded = true;
+						break;
+					} catch (e) {
+						lastError = e instanceof Error ? e.message : String(e);
+						if (attempt < maxRetries) continue;
+					}
+				}
+
+				if (!succeeded) {
+					const err = new ToolError("execution-error", tool_name, lastError);
 					const durationMs = Date.now() - toolStart;
 					this.emit("tool:error", { toolName: tool_name, input: effectiveInput, error: err.message });
 					trace.toolCalls.push({ toolName: tool_name, input: effectiveInput, result: "", durationMs, error: err.message });
 					trace.errors.push(err.message);
-					this.messageHistory.push({ role: "developer", content: `ToolError [${err.kind}] on "${tool_name}": ${err.message}` });
+					this.messageHistory.push({ role: "developer", content: `ToolError [${err.kind}] on "${tool_name}" (after ${(tool.maxRetries ?? 0) + 1} attempt(s)): ${err.message}` });
 					await this.persistHistory();
 					continue;
 				}
@@ -450,6 +524,7 @@ export class Agent extends EventEmitter {
 		}
 
 		finalize();
+		if (timeoutHandle) clearTimeout(timeoutHandle);
 		this.emit("run:failed", { error: "Max iterations reached without OUTPUT.", trace });
 	}
 }
